@@ -4,19 +4,21 @@ Welcome to the official User Manual for the **Console Caveman Escape Game**! Thi
 
 ---
 
-## 💻 1. System Requirements
+## 💻 1. System Requirements & Platform Compatibility
 
-The game engine is built on standard C99 structures and utilizes POSIX-compliant terminal manipulation headers (`<termios.h>`, `<unistd.h>`, `<sys/select.h>`). It is fully supported on the following operating systems:
+The game engine is built on standard C99 structures and utilizes POSIX-compliant terminal manipulation headers (`<termios.h>`, `<unistd.h>`, `<sys/select.h>`). 
 
+### 🖥️ Supported Environments:
 *   **Linux**: Ubuntu, Debian, Arch Linux, Fedora, CentOS, etc. (Native support).
 *   **macOS**: macOS Terminal, iTerm2 (Native support).
-*   **Windows**: Windows Subsystem for Linux (WSL) or MSYS2/MinGW.
+*   **Windows**: 100% supported through compatibility layers (WSL / MSYS2 / Git Bash). *Does not run natively inside raw Command Prompt (cmd.exe) or PowerShell.*
 
-### 📋 Prerequisites
+### 📋 Prerequisites & Build Tool Installation
 
-To pull, compile, and run the game, you need a C compiler and standard makefile tooling installed.
+To pull, compile, and run the game, you need a C compiler and standard makefile tooling installed for your platform.
 
-#### installing Build Tools:
+#### 🐧 Linux (Native)
+Install development packages using your standard package manager:
 *   **Debian/Ubuntu**:
     ```bash
     sudo apt update
@@ -30,10 +32,49 @@ To pull, compile, and run the game, you need a C compiler and standard makefile 
     ```bash
     sudo dnf groupinstall "Development Tools" && sudo dnf install git
     ```
-*   **macOS** (Via Homebrew or Xcode command line tools):
-    ```bash
-    xcode-select --install
-    ```
+
+#### 🍏 macOS (Native)
+Install command line utilities via your terminal:
+```bash
+xcode-select --install
+```
+
+#### 🪟 Windows Setup (Three Support Options)
+
+##### Option A: Windows Subsystem for Linux (WSL / WSL2) (Highly Recommended 🌟)
+WSL provides a native Linux kernel and environment inside Windows.
+1. Open PowerShell as Administrator and install WSL:
+   ```powershell
+   wsl --install
+   ```
+2. Restart your computer if prompted.
+3. Open your newly installed Linux app (e.g. **Ubuntu**) from the Start menu.
+4. Run standard commands to install compilation tools:
+   ```bash
+   sudo apt update && sudo apt install build-essential git
+   ```
+5. Clone and build the game as normal!
+
+##### Option B: MSYS2 / MinGW-w64 (POSIX Translation Emulation)
+MSYS2 compiles POSIX Unix code into native Windows `.exe` binaries:
+1. Download and install [MSYS2](https://www.msys2.org/).
+2. Open the **MSYS2 UCRT64** terminal from the Start menu.
+3. Run the following command to update and install compilers and tools:
+   ```bash
+   pacman -S mingw-w64-ucrt-x86_64-gcc make git
+   ```
+4. Clone and compile the game:
+   ```bash
+   git clone https://github.com/LAFFI01/Aadibashi_Run.git
+   cd Aadibashi_Run
+   make clean && make
+   ./bin/caveman_escape
+   ```
+
+##### Option C: Git Bash
+1. Install [Git for Windows](https://git-scm.com/) (which comes prepackaged with Git Bash).
+2. Open the **Git Bash** shell.
+3. If MinGW or GCC tools are linked in your system PATH, you can run `make clean && make` to compile and play the game directly inside Git Bash.
 
 ---
 
