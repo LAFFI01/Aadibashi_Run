@@ -1,0 +1,14 @@
+# Intermediate Build Objects
+build/
+
+# Compiled Production Binaries
+bin/
+
+# Runtime Cache and Persisted Scores
+data/high_score.dat
+
+# System Specific Files
+.DS_Store
+Thumbs.db
+*.swp
+*.o
