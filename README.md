@@ -97,6 +97,22 @@ Launch the executable directly from your terminal:
 
 ---
 
+## 🪟 Windows Compatibility
+
+Because the game engine leverages native Unix POSIX system APIs (`<termios.h>`, `<unistd.h>`, and `<sys/select.h>`) for high-performance, non-blocking real-time keyboard polling, it **does not run natively on Windows Command Prompt (`cmd.exe`) or PowerShell**.
+
+However, it is **100% supported** on Windows through three seamless compatibility layers:
+
+1. **Windows Subsystem for Linux (WSL / WSL2) (Highly Recommended)**:
+   - WSL runs a full native Linux kernel inside Windows.
+   - Install a distribution (e.g. Ubuntu) from the Microsoft Store, open the WSL terminal, clone this repository, and run `make clean && make` to play natively with maximum performance.
+2. **MSYS2 / MinGW-w64 (POSIX Emulation)**:
+   - Install [MSYS2](https://www.msys2.org/). Open the MSYS2 UCRT64 or MinGW64 shell, install compilers (`pacman -S mingw-w64-ucrt-x86_64-gcc make`), and build. It compiles and generates a running Windows `.exe` application.
+3. **Git Bash**:
+   - Packaged with Git for Windows. Open a Git Bash terminal and build using standard MSYS compiler tooling to run.
+
+---
+
 ## 🎮 How to Play
 
 *   **Move**: Use **`WASD`** keys or **Arrow Keys** to steer the Caveman.
