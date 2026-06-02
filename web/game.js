@@ -287,6 +287,7 @@ function updateHud() {
 
 // Core Game Setup
 function startGame() {
+    reportGameplayStart();
     gameActive = true;
     playerWon = false;
     playerLives = 3;
@@ -437,6 +438,7 @@ function gameLoopTick() {
     if (escapeGate.active && player.x === escapeGate.x && player.y === escapeGate.y) {
         currentLevel++;
         playRetroSound('levelup');
+        triggerHappyTime(); // Celebrates level up milestone!
         
         if (enemyCount < MAX_ENEMIES) {
             enemyCount++;
@@ -1047,6 +1049,7 @@ function playerCaught() {
 
 // Game Over Teardown
 function gameOver(won) {
+    reportGameplayStop();
     gameActive = false;
     clearInterval(gameLoopTimer);
     playRetroSound(won ? 'levelup' : 'death');
@@ -1079,32 +1082,67 @@ function gameOver(won) {
 }
 
 // Action Event Hooks (Keys, Touch and Clicks)
+// ==========================================================
+// CrazyGames SDK Integration Helpers
+// ==========================================================
+let crazySdk = null;
+
+function initCrazyGamesSdk() {
+    try {
+        if (window.CrazyGames && window.CrazyGames.SDK) {
+            crazySdk = window.CrazyGames.SDK;
+            console.log("CrazyGames SDK v2 linked successfully!");
+        }
+    } catch (err) {
+        console.warn("CrazyGames SDK detection skipped or unavailable offline:", err);
+    }
+}
+
+function reportGameplayStart() {
+    if (crazySdk && crazySdk.game) {
+        try { crazySdk.game.gameplayStart(); } catch (e) { console.error(e); }
+    }
+}
+
+function reportGameplayStop() {
+    if (crazySdk && crazySdk.game) {
+        try { crazySdk.game.gameplayStop(); } catch (e) { console.error(e); }
+    }
+}
+
+function triggerHappyTime() {
+    if (crazySdk && crazySdk.game) {
+        try { crazySdk.game.happyTime(); } catch (e) { console.error(e); }
+    }
+}
+
 function handleDirectionInput(dir) {
     if (!gameActive) return;
     player.dir = dir;
 }
 
-// Bind keyboard hooks
+// Bind keyboard hooks (with page scroll prevention for embedded iframe portal compatibility)
 window.addEventListener('keydown', (e) => {
+    // Stop parent browser scrolling when playing inside an iframe container
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', ' ', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].indexOf(e.key) >= 0) {
+        e.preventDefault();
+    }
+    
     if (!gameActive) return;
     
     // Support WASD + Arrows
     switch (e.key) {
         case 'w': case 'W': case 'ArrowUp':
             handleDirectionInput('UP');
-            e.preventDefault();
             break;
         case 's': case 'S': case 'ArrowDown':
             handleDirectionInput('DOWN');
-            e.preventDefault();
             break;
         case 'a': case 'A': case 'ArrowLeft':
             handleDirectionInput('LEFT');
-            e.preventDefault();
             break;
         case 'd': case 'D': case 'ArrowRight':
             handleDirectionInput('RIGHT');
-            e.preventDefault();
             break;
         case 'Escape':
             gameOver(false);
@@ -1150,7 +1188,13 @@ document.getElementById('soundToggleBtn').addEventListener('click', () => {
 
 // First startup initial load
 window.addEventListener('DOMContentLoaded', () => {
+    initCrazyGamesSdk();
     loadRecord();
     generateObstacles();
     renderScreen(); // Draw background grid layout initial frames
+    
+    // Focus window on clicks to capture keyboard hooks in embedded iframes instantly
+    window.addEventListener('click', () => {
+        window.focus();
+    });
 });
