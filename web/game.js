@@ -5,6 +5,42 @@ const TICK_DURATION_MS = 120; // Faster retro arcarde clock speed (120ms)
 const TARGET_SCORE = 50; // 5 stars * 10 points
 const MAX_ENEMIES = 20;
 
+// Prehistoric Cavern Environment Themes (Green Moss -> Autumn Forest -> Frozen Ice -> Volcano Magma)
+const CAVERN_THEMES = [
+    {
+        name: 'MOSS GREEN',
+        floorBg: '#05140b',
+        border: '#166534',
+        crack: 'rgba(22, 101, 52, 0.18)',
+        rockStart: '#15803d',
+        rockEnd: '#064e3b'
+    },
+    {
+        name: 'AUTUMN FOREST',
+        floorBg: '#140f09',
+        border: '#854d0e',
+        crack: 'rgba(133, 77, 14, 0.18)',
+        rockStart: '#a16207',
+        rockEnd: '#451a03'
+    },
+    {
+        name: 'FROZEN ICE',
+        floorBg: '#051625',
+        border: '#075985',
+        crack: 'rgba(7, 89, 133, 0.18)',
+        rockStart: '#0284c7',
+        rockEnd: '#0c4a6e'
+    },
+    {
+        name: 'VOLCANO MAGMA',
+        floorBg: '#120505',
+        border: '#991b1b',
+        crack: 'rgba(153, 27, 27, 0.22)',
+        rockStart: '#dc2626',
+        rockEnd: '#450a0a'
+    }
+];
+
 // Game State Variables
 let playerLives = 3;
 
@@ -222,7 +258,8 @@ function saveRecord(name, score) {
 
 // UI HUD Dashboard Syncs
 function updateHud() {
-    document.getElementById('hudLevel').innerText = `WAVE ${currentLevel}`;
+    let theme = CAVERN_THEMES[(currentLevel - 1) % 4];
+    document.getElementById('hudLevel').innerText = `WAVE ${currentLevel} (${theme.name})`;
     document.getElementById('hudScore').innerText = currentScore;
     
     const progress = Math.min(5, Math.floor((currentScore - (currentLevel - 1) * 50) / 10));
@@ -835,32 +872,87 @@ function drawAxe(cx, cy, tick) {
     ctx.restore();
 }
 
+// Draw beautifully animated swirling Concentric Vortex Escape Portal
+function drawPortal(cx, cy, tick) {
+    ctx.save();
+    
+    // Portal shifts through a spectrum of magic purple, magenta, and blue colors
+    let hue = (tick * 6) % 360;
+    ctx.shadowColor = `hsl(${hue}, 100%, 55%)`;
+    ctx.shadowBlur = 14 + Math.sin(tick * 0.25) * 5;
+    
+    // Swirling concentric outer rings
+    let numRings = 4;
+    for (let r = 0; r < numRings; r++) {
+        let radius = ((tick + r * 3) % 11) + 2.5;
+        let opacity = 1.0 - (radius / 13.5);
+        
+        ctx.strokeStyle = `hsla(${(hue + r * 45) % 360}, 100%, 75%, ${opacity})`;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        // Shifting portal ellipse angle
+        ctx.ellipse(cx, cy, radius * 0.75, radius * 1.15, tick * 0.04, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    // Core event horizon (deep cosmic purple center)
+    ctx.fillStyle = '#0f051c';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 4, 6, tick * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Rotating spark tracers around edge
+    ctx.strokeStyle = `hsl(${hue}, 100%, 85%)`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, tick * 0.08, tick * 0.08 + Math.PI, false);
+    ctx.stroke();
+    
+    ctx.restore();
+}
+
 // CRT Terminal screen drawings
 function renderScreen() {
-    // Clear canvas
-    ctx.fillStyle = '#03050c';
+    // Look up dynamic cavern theme details based on current wave level
+    let theme = CAVERN_THEMES[(currentLevel - 1) % 4];
+
+    // 1. Draw Textured Cavern slab stone tiles
+    ctx.fillStyle = theme.floorBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Static Border Walls (Deep Blue CRT borders)
-    ctx.strokeStyle = '#1e3a8a';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = theme.crack;
+    ctx.lineWidth = 1.2;
+    for (let x = 0; x < GRID_WIDTH; x += 4) {
+        ctx.beginPath();
+        ctx.moveTo(x * cellWidth, 0);
+        ctx.lineTo(x * cellWidth + (x % 2 === 0 ? 8 : -8), canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < GRID_HEIGHT; y += 4) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * cellHeight);
+        ctx.lineTo(canvas.width, y * cellHeight + (y % 2 === 0 ? 8 : -8));
+        ctx.stroke();
+    }
+
+    // 2. Draw Static Cavern boundary walls (themed color border)
+    ctx.strokeStyle = theme.border;
+    ctx.lineWidth = 2.5;
     ctx.strokeRect(cellWidth / 2, cellHeight / 2, canvas.width - cellWidth, canvas.height - cellHeight);
 
-    // Draw Obstacles (Richly textured slate-gray rock blocks with fracture cracks)
+    // 3. Draw themed Rock Obstacles (layered with inner cracks)
     for (let obs of obstacles) {
         let rx = obs.x * cellWidth;
         let ry = obs.y * cellHeight;
         
-        // Solid rock face
         let rockGrad = ctx.createLinearGradient(rx, ry, rx + cellWidth, ry + cellHeight);
-        rockGrad.addColorStop(0, '#475569'); // Slate 600
-        rockGrad.addColorStop(0.5, '#334155'); // Slate 700
-        rockGrad.addColorStop(1, '#1e293b'); // Slate 800
+        rockGrad.addColorStop(0, theme.rockStart);
+        rockGrad.addColorStop(1, theme.rockEnd);
         ctx.fillStyle = rockGrad;
         ctx.fillRect(rx + 1, ry + 1, cellWidth - 2, cellHeight - 2);
         
-        // Inner cracks / fracture details (pixel rock designs)
-        ctx.strokeStyle = '#475569';
+        // Inner fracture lines
+        ctx.strokeStyle = theme.border;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(rx + 3, ry + 3);
@@ -870,29 +962,19 @@ function renderScreen() {
         ctx.stroke();
     }
 
-    // Draw Food Meat (Roasted primeval juicy drumsticks)
+    // 4. Draw Food Meat
     if (food.active) {
         drawMeat(food.x * cellWidth + cellWidth / 2, food.y * cellHeight + cellHeight / 2, frameTick);
     }
 
-    // Draw Battle Axe Weapon (Glowing stone axe in even rounds >= 4)
+    // 5. Draw Battle Axe Weapon
     if (axe.active) {
         drawAxe(axe.x * cellWidth + cellWidth / 2, axe.y * cellHeight + cellHeight / 2, frameTick);
     }
 
-    // Draw Escape Gate Portal (Liquid shifting waves)
+    // 6. Draw swirling liquid Escape Portal
     if (escapeGate.active) {
-        ctx.fillStyle = '#ff00dc';
-        ctx.shadowColor = '#ff00dc';
-        ctx.shadowBlur = 10;
-        ctx.font = `bold ${cellHeight}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        const densities = ['░', '▒', '▓', '▒'];
-        const portalGlyph = densities[frameTick % 4];
-        ctx.fillText(portalGlyph, escapeGate.x * cellWidth + cellWidth / 2, escapeGate.y * cellHeight + cellHeight / 2);
-        ctx.shadowBlur = 0;
+        drawPortal(escapeGate.x * cellWidth + cellWidth / 2, escapeGate.y * cellHeight + cellHeight / 2, frameTick);
     }
 
     // Draw Caveman Human Player
