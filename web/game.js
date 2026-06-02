@@ -1,6 +1,6 @@
 // Game Engine Constants
-const GRID_WIDTH = 70;
-const GRID_HEIGHT = 28;
+const GRID_WIDTH = 75;
+const GRID_HEIGHT = 30;
 const TICK_DURATION_MS = 120; // Faster retro arcarde clock speed (120ms)
 const TARGET_SCORE = 50; // 5 stars * 10 points
 const MAX_ENEMIES = 20;
@@ -879,33 +879,33 @@ function drawPortal(cx, cy, tick) {
     // Portal shifts through a spectrum of magic purple, magenta, and blue colors
     let hue = (tick * 6) % 360;
     ctx.shadowColor = `hsl(${hue}, 100%, 55%)`;
-    ctx.shadowBlur = 14 + Math.sin(tick * 0.25) * 5;
+    ctx.shadowBlur = 16 + Math.sin(tick * 0.25) * 6;
     
-    // Swirling concentric outer rings
+    // Swirling concentric outer rings (larger, epic boundaries!)
     let numRings = 4;
     for (let r = 0; r < numRings; r++) {
-        let radius = ((tick + r * 3) % 11) + 2.5;
-        let opacity = 1.0 - (radius / 13.5);
+        let radius = ((tick + r * 3.5) % 16) + 4.5;
+        let opacity = 1.0 - (radius / 21);
         
         ctx.strokeStyle = `hsla(${(hue + r * 45) % 360}, 100%, 75%, ${opacity})`;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.6;
         ctx.beginPath();
         // Shifting portal ellipse angle
-        ctx.ellipse(cx, cy, radius * 0.75, radius * 1.15, tick * 0.04, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, radius * 0.8, radius * 1.25, tick * 0.04, 0, Math.PI * 2);
         ctx.stroke();
     }
     
-    // Core event horizon (deep cosmic purple center)
+    // Core event horizon (deep cosmic purple center, towering size!)
     ctx.fillStyle = '#0f051c';
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 4, 6, tick * 0.04, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, 6, 9.5, tick * 0.04, 0, Math.PI * 2);
     ctx.fill();
     
     // Rotating spark tracers around edge
     ctx.strokeStyle = `hsl(${hue}, 100%, 85%)`;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.arc(cx, cy, 4, tick * 0.08, tick * 0.08 + Math.PI, false);
+    ctx.arc(cx, cy, 6.2, tick * 0.08, tick * 0.08 + Math.PI, false);
     ctx.stroke();
     
     ctx.restore();
