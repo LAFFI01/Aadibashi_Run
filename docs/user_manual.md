@@ -150,14 +150,16 @@ The low-latency input engine supports two layouts, processing navigation instant
    | **`★` / `☆`** | **Food Stars** | Twinkling stars scattered in the cave. Collect them to earn points (+10 score per star). |
    | **`B` / `M` / `D` / `H`** | **Chaser Beasts** | Intelligent colored monster chasers hunting you using minimal distance vectors. |
    | **`☠`** | **Rage Proximity Warning** | When a beast gets within a **5-tile radius**, its icon flashes aggressively as a blinking red skull `☠`, warning you of mortal danger! |
-   | **`▒` / `░` / `▓`** | **Escape Gate (Portal)** | A liquid pulsing portal opening on the right wall once **10 stars** (100 score points) are collected. Entering it triggers a level up. |
+   | **`▒` / `░` / `▓`** | **Escape Gate (Portal)** | A liquid pulsing portal opening on the right wall once **5 stars** (50 score points) are collected. Entering it triggers a level up. |
+   | **`❤️` / `♥`** | **Player Lives** | The Caveman player has **3 Lives** shown as glowing hearts in the web arcade panel. When caught by a beast, a life is lost and the player respawns. |
 
 ### 🌊 Level Up Wave Progression
 The game does not end after a single screen! Entering the active portal triggers a **Level Up Wave**:
 1. Your character resets to the starting top-left corner `(2, 2)`.
 2. The gate locks, and new food is generated.
 3. **An additional beast is added to the horde** (up to 20 maximum). Active beasts spawn in opposite strategic corners of the arena (top-right, bottom-left, etc.) to try and surround you.
-4. Each level requires collecting another **10 food stars** to unlock the exit portal.
+4. Each level requires collecting another **5 food stars** to unlock the exit portal.
+5. Your remaining lives carry over between wave levels!
 
 ---
 
