@@ -216,6 +216,9 @@ function startGame() {
     enemies = [{ x: GRID_WIDTH - 3, y: GRID_HEIGHT - 2, active: true }];
     escapeGate.active = false;
 
+    // Reset monitor shake at start
+    document.querySelector('.crt-bezel').classList.remove('crt-shake');
+
     generateObstacles();
     spawnFood();
     updateHud();
@@ -225,6 +228,74 @@ function startGame() {
     // Run Asynchronous Clock Tick loops
     if (gameLoopTimer) clearInterval(gameLoopTimer);
     gameLoopTimer = setInterval(gameLoopTick, TICK_DURATION_MS);
+}
+
+// Breadth-First Search (BFS) for true shortest path planning (mirrors C99 engine)
+function findBfsNextStep(start, target, enemyIdx) {
+    let queue = [{ x: start.x, y: start.y }];
+    
+    // Visited grid maps
+    let visited = Array(GRID_WIDTH).fill().map(() => Array(GRID_HEIGHT).fill(false));
+    let parent = Array(GRID_WIDTH).fill().map(() => Array(GRID_HEIGHT).fill(null));
+    
+    visited[start.x][start.y] = true;
+    let pathFound = false;
+    
+    const moves = [
+        { dx: 0, dy: -1 }, // UP
+        { dx: 0, dy: 1 },  // DOWN
+        { dx: -1, dy: 0 }, // LEFT
+        { dx: 1, dy: 0 }   // RIGHT
+    ];
+    
+    while (queue.length > 0) {
+        let curr = queue.shift();
+        
+        if (curr.x === target.x && curr.y === target.y) {
+            pathFound = true;
+            break;
+        }
+        
+        for (let mv of moves) {
+            let nx = curr.x + mv.dx;
+            let ny = curr.y + mv.dy;
+            
+            if (checkCollision(nx, ny)) continue;
+            
+            // Mutual avoidance
+            let occupied = false;
+            for (let oe = 0; oe < enemies.length; oe++) {
+                if (oe !== enemyIdx && enemies[oe].active && enemies[oe].x === nx && enemies[oe].y === ny) {
+                    occupied = true;
+                    break;
+                }
+            }
+            if (occupied) continue;
+            
+            if (escapeGate.active && nx === escapeGate.x && ny === escapeGate.y) continue;
+            
+            if (!visited[nx][ny]) {
+                visited[nx][ny] = true;
+                parent[nx][ny] = curr;
+                queue.push({ x: nx, y: ny });
+            }
+        }
+    }
+    
+    if (pathFound) {
+        let curr = { x: target.x, y: target.y };
+        let prevStep = { x: target.x, y: target.y };
+        
+        while (curr.x !== start.x || curr.y !== start.y) {
+            prevStep = { x: curr.x, y: curr.y };
+            let p = parent[curr.x][curr.y];
+            if (!p) break;
+            curr = p;
+        }
+        return prevStep;
+    }
+    
+    return start; // Fallback to stationary
 }
 
 // Core Loop Steps
@@ -308,60 +379,38 @@ function gameLoopTick() {
 
     // 4. Update Automated Enemy AI hunting paths (Moves every 2 clock ticks)
     if (frameTick % 2 === 0) {
-        const moves = [
-            { dx: 0, dy: -1 }, // UP
-            { dx: 0, dy: 1 },  // DOWN
-            { dx: -1, dy: 0 }, // LEFT
-            { dx: 1, dy: 0 }   // RIGHT
-        ];
+        let anyBeastClose = false;
 
         for (let e = 0; e < enemies.length; e++) {
             let enemy = enemies[e];
             if (!enemy.active) continue;
 
-            let minDistance = 1e9;
-            let bestX = enemy.x;
-            let bestY = enemy.y;
-
-            for (let mv of moves) {
-                let cx = enemy.x + mv.dx;
-                let cy = enemy.y + mv.dy;
-
-                if (checkCollision(cx, cy)) continue;
-
-                // Mutual Chaser Avoidance logic: Skip tiles occupied by another active beast
-                let occupiedByBeast = false;
-                for (let oe = 0; oe < enemies.length; oe++) {
-                    if (oe !== e && enemies[oe].active && enemies[oe].x === cx && enemies[oe].y === cy) {
-                        occupiedByBeast = true;
-                        break;
-                    }
-                }
-                if (occupiedByBeast) continue;
-
-                // Stop beast from sitting on the exit gate
-                if (escapeGate.active && cx === escapeGate.x && cy === escapeGate.y) continue;
-
-                // Euclidean distance optimization
-                let dx = cx - player.x;
-                let dy = cy - player.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    bestX = cx;
-                    bestY = cy;
-                }
-            }
-
-            enemy.x = bestX;
-            enemy.y = bestY;
+            // Use Breadth-First Search (BFS) pathfinder
+            let nextStep = findBfsNextStep(enemy, player, e);
+            enemy.x = nextStep.x;
+            enemy.y = nextStep.y;
 
             // Check if player caught during beast update
             if (enemy.x === player.x && enemy.y === player.y) {
                 gameOver(false);
                 return;
             }
+
+            // Proximity shake triggers checks
+            let dx = enemy.x - player.x;
+            let dy = enemy.y - player.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= 5.0) {
+                anyBeastClose = true;
+            }
+        }
+
+        // Apply screen shake
+        const bezel = document.querySelector('.crt-bezel');
+        if (anyBeastClose && gameActive) {
+            bezel.classList.add('crt-shake');
+        } else {
+            bezel.classList.remove('crt-shake');
         }
     }
 
@@ -388,10 +437,26 @@ function renderScreen() {
     ctx.lineWidth = 2;
     ctx.strokeRect(cellWidth / 2, cellHeight / 2, canvas.width - cellWidth, canvas.height - cellHeight);
 
-    // Draw Obstacles (Gray rock blocks)
-    ctx.fillStyle = '#475569';
+    // Draw Obstacles (Richly textured slate-gray rock blocks with fracture cracks)
     for (let obs of obstacles) {
-        ctx.fillRect(obs.x * cellWidth + 1, obs.y * cellHeight + 1, cellWidth - 2, cellHeight - 2);
+        let rx = obs.x * cellWidth;
+        let ry = obs.y * cellHeight;
+        
+        let rockGrad = ctx.createLinearGradient(rx, ry, rx + cellWidth, ry + cellHeight);
+        rockGrad.addColorStop(0, '#334155'); // Slate 700
+        rockGrad.addColorStop(1, '#1e293b'); // Slate 800
+        ctx.fillStyle = rockGrad;
+        ctx.fillRect(rx + 1, ry + 1, cellWidth - 2, cellHeight - 2);
+        
+        // Inner cracks / fracture details (pixel rock designs)
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(rx + 3, ry + 3);
+        ctx.lineTo(rx + cellWidth - 3, ry + cellHeight - 3);
+        ctx.moveTo(rx + cellWidth - 4, ry + 4);
+        ctx.lineTo(rx + 4, ry + cellHeight - 4);
+        ctx.stroke();
     }
 
     // Draw Food Star (Twinkling gold stars)
