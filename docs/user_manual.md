@@ -152,6 +152,7 @@ The low-latency input engine supports two layouts, processing navigation instant
    | **`☠`** | **Rage Proximity Warning** | When a beast gets within a **5-tile radius**, its icon flashes aggressively as a blinking red skull `☠`, warning you of mortal danger! |
    | **`▒` / `░` / `▓`** | **Escape Gate (Portal)** | A liquid pulsing portal opening on the right wall once **5 meats** (50 score points) are collected. Entering it triggers a level up. |
    | **`❤️` / `♥`** | **Player Lives** | The Caveman player has **3 Lives** shown as glowing hearts in the web arcade panel. When caught by a beast, a life is lost and the player respawns. |
+   | **`🪓`** | **Stone Axe (Weapon)** | Spawns on the map in even rounds starting at **Level 4, 6, 8, and so on**. When held, it allows you to hit and defeat **only one beast** that catches you, protecting your life! |
 
 ### 🌊 Level Up Wave Progression
 The game does not end after a single screen! Entering the active portal triggers a **Level Up Wave**:

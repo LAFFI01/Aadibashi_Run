@@ -105,6 +105,8 @@ let enemyCount = 1;
 let food = { x: 0, y: 0, active: false };
 let escapeGate = { x: GRID_WIDTH - 2, y: Math.floor(GRID_HEIGHT / 2), active: false };
 let obstacles = [];
+let playerHasAxe = false;
+let axe = { x: 0, y: 0, active: false };
 
 // Procedural Barrier Walls Generator (Perfect C99 logic match)
 function generateObstacles() {
@@ -168,6 +170,37 @@ function spawnFood() {
     food.active = true;
 }
 
+// Procedural Weapon Spawner (Spawn an axe in even rounds >= 4)
+function spawnAxe() {
+    let valid = false;
+    let rx, ry;
+    
+    while (!valid) {
+        rx = 1 + Math.floor(Math.random() * (GRID_WIDTH - 2));
+        ry = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
+        
+        if (checkCollision(rx, ry)) continue;
+        if (rx === player.x && ry === player.y) continue;
+        if (rx === food.x && ry === food.y) continue;
+        if (rx === escapeGate.x && ry === escapeGate.y) continue;
+        
+        let spawnOnEnemy = false;
+        for (let enemy of enemies) {
+            if (enemy.active && enemy.x === rx && enemy.y === ry) {
+                spawnOnEnemy = true;
+                break;
+            }
+        }
+        if (spawnOnEnemy) continue;
+        
+        valid = true;
+    }
+    
+    axe.x = rx;
+    axe.y = ry;
+    axe.active = true;
+}
+
 // Initialize Local Score cache from localStorage
 function loadRecord() {
     const savedScore = localStorage.getItem('caveman_high_score');
@@ -202,6 +235,8 @@ function updateHud() {
     if (hearts === '') hearts = '💀 DEAD';
     document.getElementById('hudLives').innerText = hearts;
     
+    document.getElementById('hudWeapon').innerText = playerHasAxe ? '🪓 STONE AXE' : 'NONE';
+    
     document.getElementById('hudRecordHolder').innerText = highScoreName;
     document.getElementById('hudHighScore').innerText = highScore;
 
@@ -229,6 +264,8 @@ function startGame() {
 
     enemies = [{ x: GRID_WIDTH - 3, y: GRID_HEIGHT - 2, active: true, type: 'MAMMOTH' }];
     escapeGate.active = false;
+    playerHasAxe = false;
+    axe.active = false;
 
     // Reset monitor shake at start
     document.querySelector('.crt-bezel').classList.remove('crt-shake');
@@ -351,6 +388,14 @@ function gameLoopTick() {
         updateHud();
     }
 
+    // 2b. Evaluate Axe weapon items collection
+    if (axe.active && player.x === axe.x && player.y === axe.y) {
+        playerHasAxe = true;
+        axe.active = false;
+        playRetroSound('star'); // weapon pickup chime
+        updateHud();
+    }
+
     // 3. Evaluate Level Escapes transitions
     if (escapeGate.active && player.x === escapeGate.x && player.y === escapeGate.y) {
         currentLevel++;
@@ -392,6 +437,15 @@ function gameLoopTick() {
         }
 
         spawnFood();
+        
+        // Spawn stone axe in even rounds >= 4 (Level 4, 6, 8...)
+        playerHasAxe = false;
+        if (currentLevel % 2 === 0 && currentLevel >= 4) {
+            spawnAxe();
+        } else {
+            axe.active = false;
+        }
+        
         updateHud();
     }
 
@@ -741,6 +795,46 @@ function drawMeat(cx, cy, tick) {
     ctx.restore();
 }
 
+// Draw Battle Axe Weapon (Glowing stone axe with wooden shaft and cyan double blade)
+function drawAxe(cx, cy, tick) {
+    ctx.save();
+    
+    // Glowing weapon aura
+    ctx.shadowColor = '#06b6d4'; // Cyan neon axe glow
+    ctx.shadowBlur = (tick % 2 === 0) ? 8 : 4;
+    
+    // Draw wooden shaft (brown diagonal handle)
+    ctx.strokeStyle = '#78350f'; // Wood brown
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 5);
+    ctx.lineTo(cx + 4, cy - 4);
+    ctx.stroke();
+    
+    // Draw double axe head (cyan scaly edge)
+    ctx.fillStyle = '#06b6d4'; // Cyan steel blade
+    ctx.beginPath();
+    // Left crescent blade
+    ctx.moveTo(cx + 2, cy - 2);
+    ctx.quadraticCurveTo(cx - 3, cy - 8, cx + 5, cy - 9);
+    ctx.quadraticCurveTo(cx + 3, cy - 3, cx + 2, cy - 2);
+    // Right crescent blade
+    ctx.moveTo(cx + 2, cy - 2);
+    ctx.quadraticCurveTo(cx + 8, cy - 3, cx + 9, cy + 5);
+    ctx.quadraticCurveTo(cx + 3, cy + 3, cx + 2, cy - 2);
+    ctx.fill();
+    
+    // Blade edge highlights (silver/white)
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(cx + 5, cy - 9, 1.2, 0, Math.PI * 2);
+    ctx.arc(cx + 9, cy + 5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+}
+
 // CRT Terminal screen drawings
 function renderScreen() {
     // Clear canvas
@@ -779,6 +873,11 @@ function renderScreen() {
     // Draw Food Meat (Roasted primeval juicy drumsticks)
     if (food.active) {
         drawMeat(food.x * cellWidth + cellWidth / 2, food.y * cellHeight + cellHeight / 2, frameTick);
+    }
+
+    // Draw Battle Axe Weapon (Glowing stone axe in even rounds >= 4)
+    if (axe.active) {
+        drawAxe(axe.x * cellWidth + cellWidth / 2, axe.y * cellHeight + cellHeight / 2, frameTick);
     }
 
     // Draw Escape Gate Portal (Liquid shifting waves)
@@ -822,8 +921,22 @@ function renderScreen() {
     }
 }
 
-// Player Caught Helper (Supports 3 Lives)
+// Player Caught Helper (Supports 3 Lives & Stone Axe shield)
 function playerCaught() {
+    if (playerHasAxe) {
+        // Find the beast that caught the player and defeat it!
+        for (let enemy of enemies) {
+            if (enemy.active && enemy.x === player.x && enemy.y === player.y) {
+                enemy.active = false; // Kill only this one animal!
+                break;
+            }
+        }
+        playerHasAxe = false; // Consume the axe
+        playRetroSound('levelup'); // Play success hit sound!
+        updateHud();
+        return; // Survives without losing a life!
+    }
+
     playerLives--;
     playRetroSound('death');
     updateHud();
