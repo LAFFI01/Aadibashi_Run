@@ -2,8 +2,11 @@
 const GRID_WIDTH = 60;
 const GRID_HEIGHT = 20;
 const TICK_DURATION_MS = 150;
-const TARGET_SCORE = 100; // 10 stars * 10 points
+const TARGET_SCORE = 50; // 5 stars * 10 points
 const MAX_ENEMIES = 20;
+
+// Game State Variables
+let playerLives = 3;
 
 // Canvas Configuration
 const canvas = document.getElementById('gameCanvas');
@@ -185,9 +188,15 @@ function updateHud() {
     document.getElementById('hudLevel').innerText = `WAVE ${currentLevel}`;
     document.getElementById('hudScore').innerText = currentScore;
     
-    const needed = currentLevel * 10;
-    const progress = Math.min(10, Math.floor((currentScore - (currentLevel - 1) * 100) / 10));
-    document.getElementById('hudStars').innerText = `${progress} / 10`;
+    const progress = Math.min(5, Math.floor((currentScore - (currentLevel - 1) * 50) / 10));
+    document.getElementById('hudStars').innerText = `${progress} / 5`;
+    
+    let hearts = '';
+    for (let i = 0; i < playerLives; i++) {
+        hearts += '❤️ ';
+    }
+    if (hearts === '') hearts = '💀 DEAD';
+    document.getElementById('hudLives').innerText = hearts;
     
     document.getElementById('hudRecordHolder').innerText = highScoreName;
     document.getElementById('hudHighScore').innerText = highScore;
@@ -204,6 +213,7 @@ function updateHud() {
 function startGame() {
     gameActive = true;
     playerWon = false;
+    playerLives = 3;
     currentScore = 0;
     currentLevel = 1;
     enemyCount = 1;
@@ -403,7 +413,7 @@ function gameLoopTick() {
 
             // Check if player caught during beast update
             if (enemy.x === player.x && enemy.y === player.y) {
-                gameOver(false);
+                playerCaught();
                 return;
             }
         }
@@ -428,7 +438,7 @@ function gameLoopTick() {
     // 5. Evaluate Caught checks
     for (let enemy of enemies) {
         if (enemy.active && enemy.x === player.x && enemy.y === player.y) {
-            gameOver(false);
+            playerCaught();
             return;
         }
     }
@@ -730,6 +740,34 @@ function renderScreen() {
         } else {
             drawMammoth(enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2, beastColor, isRaged, frameTick);
         }
+    }
+}
+
+// Player Caught Helper (Supports 3 Lives)
+function playerCaught() {
+    playerLives--;
+    playRetroSound('death');
+    updateHud();
+
+    if (playerLives > 0) {
+        // Reset player coordinates to start position
+        player.x = 2;
+        player.y = 2;
+        player.dir = 'NONE';
+        
+        // Reset all active beasts back to strategic positions to avoid instant respawn spawnkill
+        for (let i = 0; i < enemies.length; i++) {
+            let ex = GRID_WIDTH - 3;
+            let ey = GRID_HEIGHT - 2;
+            if (i === 1) { ex = GRID_WIDTH - 3; ey = 2; }
+            else if (i === 2) { ex = 2; ey = GRID_HEIGHT - 2; }
+            else if (i === 3) { ex = Math.floor(GRID_WIDTH / 2); ey = GRID_HEIGHT - 2; }
+            else if (i === 4) { ex = Math.floor(GRID_WIDTH / 2); ey = 2; }
+            enemies[i].x = ex;
+            enemies[i].y = ey;
+        }
+    } else {
+        gameOver(false);
     }
 }
 
