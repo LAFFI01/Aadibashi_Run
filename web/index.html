@@ -29,8 +29,8 @@
                     <h3 class="panel-title">📟 GAME LEGENDS</h3>
                     <ul class="legend-list">
                         <li><span class="legend-badge caveman">☻</span> <strong>Caveman</strong> (Player)</li>
-                        <li><span class="legend-badge star">★</span> <strong>Star</strong> (+10 Score)</li>
-                        <li><span class="legend-badge portal">▒</span> <strong>Portal</strong> (Unlocked @ 10 Stars)</li>
+                        <li><span class="legend-badge star">🍖</span> <strong>Meat</strong> (+10 Score)</li>
+                        <li><span class="legend-badge portal">▒</span> <strong>Portal</strong> (Unlocked @ 5 Meats)</li>
                         <li><span class="legend-badge beast-calm">🐘</span> <strong>Mammoth</strong> (Ice-Age Beast)</li>
                         <li><span class="legend-badge beast-rage">🦖</span> <strong>Dino</strong> (Super Fast Boss)</li>
                         <li><span class="legend-badge rock">█</span> <strong>Rock Wall</strong> (Obstacle)</li>
@@ -65,13 +65,13 @@
 
                         <!-- High Score Overlay / Startup Screen / Game Over Screen -->
                         <div id="screenOverlay" class="screen-overlay active">
-                            <div class="overlay-content">
-                                <h2 id="overlayTitle">CAVEMAN ESCAPE</h2>
-                                <p id="overlaySubtitle">Press Start to Escape the Beast Horde</p>
+                            <div class="overlay-box">
+                                <h2 id="overlayTitle" class="glitch-title" data-text="READY ARCADE">READY ARCADE</h2>
+                                <p id="overlaySubtitle" class="overlay-desc">Use WASD or Arrows to steer the Caveman and collect meats while escaping mammoths!</p>
                                 
-                                <div id="usernameInputContainer" class="hidden">
-                                    <label for="usernameInput" class="overlay-label">🏆 NEW RECORD HOLDER!</label>
-                                    <input type="text" id="usernameInput" maxlength="15" placeholder="Enter your name" value="Player 1">
+                                <div id="usernameInputContainer" class="form-group">
+                                    <label for="usernameInput" class="form-label">ENTER YOUR INITIALS:</label>
+                                    <input type="text" id="usernameInput" class="retro-input" maxlength="15" placeholder="NCIT HERO" value="Aadibashi">
                                 </div>
 
                                 <button id="startBtn" class="retro-btn">START GAME</button>
@@ -104,7 +104,7 @@
                         <div id="hudScore" class="stat-value text-green">0</div>
                     </div>
                     <div class="stat-group">
-                        <div class="stat-label">STARS COLLECTED</div>
+                        <div class="stat-label">MEAT COLLECTED</div>
                         <div id="hudStars" class="stat-value text-yellow">0 / 5</div>
                     </div>
                     <div class="stat-group">

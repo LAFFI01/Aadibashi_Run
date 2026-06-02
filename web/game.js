@@ -404,9 +404,9 @@ function gameLoopTick() {
 
         let shouldMove = false;
         if (enemy.type === 'DINO') {
-            shouldMove = true; // Every tick (Double Speed!)
+            shouldMove = (frameTick % 3 !== 0); // Slightly slower: moves 2 out of every 3 ticks (66.7% speed)
         } else {
-            shouldMove = (frameTick % 2 === 0); // Every 2 ticks (Normal Speed)
+            shouldMove = (frameTick % 2 === 0); // Every 2 ticks (Normal Speed: 50% speed)
         }
 
         if (shouldMove) {
@@ -691,11 +691,53 @@ function drawDino(cx, cy, color, isRaged, tick) {
     ctx.stroke();
     
     // Spikes on the tail tip (Gold)
-    ctx.fillStyle = scaleColor;
+ctx.fillStyle = scaleColor;
     ctx.beginPath();
     ctx.arc(cx + 19 + motion, cy - 4, 1.8, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.restore();
+}
+
+// Draw juicy roasted Caveman Meat (replaces simple Star symbol with 2D bone drumstick)
+function drawMeat(cx, cy, tick) {
+    ctx.save();
+    
+    // Glowing retro outline
+    ctx.shadowColor = '#f97316'; // Neon orange glow
+    ctx.shadowBlur = (tick % 2 === 0) ? 8 : 4;
+    
+    // Draw white bone shaft (diagonal angle)
+    ctx.strokeStyle = '#f8fafc'; // Bone white
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 5);
+    ctx.lineTo(cx + 6, cy - 6);
+    ctx.stroke();
+    
+    // Bone joints / double knobs on both ends
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy + 5, 2.2, 0, Math.PI * 2);
+    ctx.arc(cx - 3, cy + 7, 2.2, 0, Math.PI * 2);
+    ctx.arc(cx + 6, cy - 6, 2.2, 0, Math.PI * 2);
+    ctx.arc(cx + 8, cy - 4, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw Roasted juicy meat steak (brownish-red)
+    ctx.fillStyle = '#ea580c'; // Sizzling orange-red roasted meat
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 7.5, 5.5, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Marbled interior details (fat ring highlight)
+    ctx.strokeStyle = '#ffedd5'; // Light cream fat strip
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+    ctx.stroke();
+    
     ctx.restore();
 }
 
@@ -715,8 +757,10 @@ function renderScreen() {
         let rx = obs.x * cellWidth;
         let ry = obs.y * cellHeight;
         
+        // Solid rock face
         let rockGrad = ctx.createLinearGradient(rx, ry, rx + cellWidth, ry + cellHeight);
-        rockGrad.addColorStop(0, '#334155'); // Slate 700
+        rockGrad.addColorStop(0, '#475569'); // Slate 600
+        rockGrad.addColorStop(0.5, '#334155'); // Slate 700
         rockGrad.addColorStop(1, '#1e293b'); // Slate 800
         ctx.fillStyle = rockGrad;
         ctx.fillRect(rx + 1, ry + 1, cellWidth - 2, cellHeight - 2);
@@ -732,19 +776,9 @@ function renderScreen() {
         ctx.stroke();
     }
 
-    // Draw Food Star (Twinkling gold stars)
+    // Draw Food Meat (Roasted primeval juicy drumsticks)
     if (food.active) {
-        ctx.fillStyle = '#ffd200';
-        ctx.shadowColor = '#ffd200';
-        ctx.shadowBlur = 8;
-        ctx.font = `bold ${cellHeight}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // Pulsing twinkle shapes
-        const starGlyph = (frameTick % 2 === 0) ? '★' : '☆';
-        ctx.fillText(starGlyph, food.x * cellWidth + cellWidth / 2, food.y * cellHeight + cellHeight / 2);
-        ctx.shadowBlur = 0; // Reset glows
+        drawMeat(food.x * cellWidth + cellWidth / 2, food.y * cellHeight + cellHeight / 2, frameTick);
     }
 
     // Draw Escape Gate Portal (Liquid shifting waves)
