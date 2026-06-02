@@ -166,8 +166,8 @@ The game does not end after a single screen! Entering the active portal triggers
 ## 🔧 5. Troubleshooting Guide
 
 ### ⚠️ Issue: Terminal Characters Look Jagged or Wrapped
-*   **Cause**: The playing grid is `60` columns wide and the HUD scoreboard renders below row `20`. If your terminal window is too small, text wrapping will disrupt the border walls.
-*   **Fix**: Simply stretch or maximize your terminal window (minimum size recommended: **80 columns by 25 rows**) and restart the game.
+*   **Cause**: The playing grid is `70` columns wide and the HUD scoreboard renders below row `28`. If your terminal window is too small, text wrapping will disrupt the border walls.
+*   **Fix**: Simply stretch or maximize your terminal window (minimum size recommended: **90 columns by 35 rows**) and restart the game.
 
 ### ⚠️ Issue: The Terminal Cursor is Missing After Game Quits
 *   **Cause**: The game hides the terminal cursor `\033[?25l` to provide a premium arcade feeling. If the game crashes, terminates abruptly, or is interrupted (e.g., via `Ctrl+C`), terminal overrides might not restore cleanly.
