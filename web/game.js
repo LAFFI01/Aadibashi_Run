@@ -1,7 +1,7 @@
 // Game Engine Constants
-const GRID_WIDTH = 60;
-const GRID_HEIGHT = 20;
-const TICK_DURATION_MS = 150;
+const GRID_WIDTH = 70;
+const GRID_HEIGHT = 28;
+const TICK_DURATION_MS = 120; // Faster retro arcarde clock speed (120ms)
 const TARGET_SCORE = 50; // 5 stars * 10 points
 const MAX_ENEMIES = 20;
 
@@ -109,16 +109,20 @@ let obstacles = [];
 // Procedural Barrier Walls Generator (Perfect C99 logic match)
 function generateObstacles() {
     obstacles = [];
-    // Barrier Wall 1: Column 15
-    for (let y = 2; y <= 7; y++) obstacles.push({ x: 15, y });
-    for (let y = 12; y <= 17; y++) obstacles.push({ x: 15, y });
+    let col1 = Math.floor(GRID_WIDTH * 0.25);
+    let col2 = Math.floor(GRID_WIDTH * 0.50);
+    let col3 = Math.floor(GRID_WIDTH * 0.75);
+
+    // Barrier Wall 1: Left Sector
+    for (let y = 2; y <= Math.floor(GRID_HEIGHT * 0.35); y++) obstacles.push({ x: col1, y });
+    for (let y = Math.floor(GRID_HEIGHT * 0.60); y <= Math.floor(GRID_HEIGHT * 0.85); y++) obstacles.push({ x: col1, y });
     
-    // Barrier Wall 2: Column 30
-    for (let y = 5; y <= 14; y++) obstacles.push({ x: 30, y });
+    // Barrier Wall 2: Middle Sector
+    for (let y = Math.floor(GRID_HEIGHT * 0.25); y <= Math.floor(GRID_HEIGHT * 0.75); y++) obstacles.push({ x: col2, y });
     
-    // Barrier Wall 3: Column 45
-    for (let y = 2; y <= 7; y++) obstacles.push({ x: 45, y });
-    for (let y = 12; y <= 17; y++) obstacles.push({ x: 45, y });
+    // Barrier Wall 3: Right Sector
+    for (let y = 2; y <= Math.floor(GRID_HEIGHT * 0.35); y++) obstacles.push({ x: col3, y });
+    for (let y = Math.floor(GRID_HEIGHT * 0.60); y <= Math.floor(GRID_HEIGHT * 0.85); y++) obstacles.push({ x: col3, y });
 }
 
 // Collision Check Function
