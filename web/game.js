@@ -427,6 +427,166 @@ function gameLoopTick() {
 }
 
 // CRT Terminal screen drawings
+// Draw Caveman Human Player dynamically
+function drawCaveman(cx, cy, dir, tick) {
+    ctx.save();
+    
+    // Set a glowing shadow for the player
+    ctx.shadowColor = '#32ff32';
+    ctx.shadowBlur = 6;
+
+    // Body (Brown Animal Skin Tunic)
+    ctx.fillStyle = '#78350f'; // Dark Brown
+    ctx.fillRect(cx - 5, cy, 10, 7);
+    
+    // Leopard spots
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(cx - 3, cy + 2, 2, 2);
+    ctx.fillRect(cx + 2, cy + 4, 1.5, 1.5);
+
+    // Diagonal Sash Strap
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy);
+    ctx.lineTo(cx + 5, cy + 5);
+    ctx.stroke();
+
+    // Head (Peach skin tone)
+    ctx.fillStyle = '#f1c27d';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 3.5, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Caveman Messy Hair (Bright Wild Orange)
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 5.5, 4, Math.PI, 0);
+    ctx.fill();
+    
+    // Messy tufts
+    ctx.fillRect(cx - 5, cy - 6, 2, 3);
+    ctx.fillRect(cx + 3, cy - 6, 2, 3);
+    ctx.fillRect(cx - 1, cy - 7, 2, 2);
+
+    // Beard
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(cx - 3.5, cy - 1, 7, 2);
+
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(cx - 2, cy - 4.5, 1, 1.5);
+    ctx.fillRect(cx + 1, cy - 4.5, 1, 1.5);
+
+    // Limbs (Dynamic walking animations based on step tick)
+    ctx.strokeStyle = '#f1c27d';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    let motion = (tick % 2 === 0) ? 2 : -2;
+
+    // Legs
+    ctx.moveTo(cx - 3, cy + 7);
+    ctx.lineTo(cx - 3 - motion, cy + 11);
+    
+    ctx.moveTo(cx + 3, cy + 7);
+    ctx.lineTo(cx + 3 + motion, cy + 11);
+
+    // Arms swinging in direction of steering
+    if (dir === 'LEFT' || dir === 'RIGHT') {
+        ctx.moveTo(cx - 5, cy + 2);
+        ctx.lineTo(cx - 9, cy + 2 + motion);
+        ctx.moveTo(cx + 5, cy + 2);
+        ctx.lineTo(cx + 9, cy + 2 - motion);
+    } else {
+        ctx.moveTo(cx - 5, cy + 2);
+        ctx.lineTo(cx - 8, cy + 5 - motion);
+        ctx.moveTo(cx + 5, cy + 2);
+        ctx.lineTo(cx + 8, cy + 5 + motion);
+    }
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// Draw terrifying AI Beast dynamically
+function drawBeast(cx, cy, color, isRaged, tick) {
+    ctx.save();
+
+    let bodyColor = isRaged ? '#ff1e1e' : color;
+    ctx.fillStyle = bodyColor;
+    
+    ctx.shadowColor = bodyColor;
+    ctx.shadowBlur = isRaged ? 12 : 5;
+
+    // Beast Torso
+    ctx.beginPath();
+    ctx.arc(cx, cy + 1, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    ctx.beginPath();
+    ctx.arc(cx, cy - 4, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fierce Spiky Horns (White)
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy - 7);
+    ctx.lineTo(cx - 6, cy - 12);
+    ctx.lineTo(cx - 1.5, cy - 8);
+    
+    ctx.moveTo(cx + 4, cy - 7);
+    ctx.lineTo(cx + 6, cy - 12);
+    ctx.lineTo(cx + 1.5, cy - 8);
+    ctx.fill();
+
+    // Glowing Eyes
+    ctx.fillStyle = isRaged ? '#ffffff' : '#facc15';
+    ctx.fillRect(cx - 2.5, cy - 5.5, 1.2, 1.2);
+    ctx.fillRect(cx + 1.3, cy - 5.5, 1.2, 1.2);
+
+    // Sharp fangs inside the maw
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, cy - 1);
+    ctx.lineTo(cx, cy - 2.5);
+    ctx.lineTo(cx + 3, cy - 1);
+    ctx.stroke();
+
+    // Claws / Legs (Waving movement)
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    let motion = (tick % 2 === 0) ? 2 : -2;
+
+    // Front legs
+    ctx.moveTo(cx - 4, cy + 3);
+    ctx.lineTo(cx - 7, cy + 8 + motion);
+    ctx.moveTo(cx + 4, cy + 3);
+    ctx.lineTo(cx + 7, cy + 8 - motion);
+
+    // Back legs
+    ctx.moveTo(cx - 3, cy + 5);
+    ctx.lineTo(cx - 5 + motion, cy + 9);
+    ctx.moveTo(cx + 3, cy + 5);
+    ctx.lineTo(cx + 5 - motion, cy + 9);
+    ctx.stroke();
+
+    // Tail (Waving spiky dynamic tail)
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 5, cy + 2);
+    ctx.quadraticCurveTo(cx + 9, cy + 2 + motion, cx + 11 + motion, cy - 2);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// CRT Terminal screen drawings
 function renderScreen() {
     // Clear canvas
     ctx.fillStyle = '#03050c';
@@ -489,32 +649,11 @@ function renderScreen() {
         ctx.shadowBlur = 0;
     }
 
-    // Draw Caveman Player (Vibrant Green)
-    ctx.fillStyle = '#32ff32';
-    ctx.shadowColor = '#32ff32';
-    ctx.shadowBlur = 8;
-    ctx.font = `bold ${cellHeight}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    let playerGlyph = '☻'; // Default standing
-    const pState = frameTick % 4;
-    
-    if (pState === 0) playerGlyph = 'C';
-    else if (pState === 2) playerGlyph = '☻';
-    else {
-        if (player.dir === 'UP') playerGlyph = '▲';
-        else if (player.dir === 'DOWN') playerGlyph = '▼';
-        else if (player.dir === 'LEFT') playerGlyph = '◄';
-        else if (player.dir === 'RIGHT') playerGlyph = '►';
-    }
-    ctx.fillText(playerGlyph, player.x * cellWidth + cellWidth / 2, player.y * cellHeight + cellHeight / 2);
-    ctx.shadowBlur = 0;
+    // Draw Caveman Human Player
+    drawCaveman(player.x * cellWidth + cellWidth / 2, player.y * cellHeight + cellHeight / 2, player.dir, frameTick);
 
     // Draw Chaser Beasts (Dynamic Styles, Colors, and Proximity Rage Flashers)
-    const beastColors = ['#ff3232', '#ffd200', '#ff00dc', '#00ffeb', '#38bdf8', '#fb923c', '#ca8a04', '#ffffff'];
-    const beastSignatures = ['B', 'M', 'D', 'H', 'Z', 'X', 'W', 'V'];
-    const beastClaws = ['Ψ', 'Ω', '☠', '♦', '♣', '▲', '☼', '╬'];
+    const beastColors = ['#ef4444', '#f59e0b', '#ec4899', '#06b6d4', '#3b82f6', '#f97316', '#a855f7', '#ffffff'];
 
     for (let i = 0; i < enemies.length; i++) {
         let enemy = enemies[i];
@@ -526,24 +665,9 @@ function renderScreen() {
         let dist = Math.sqrt(dx * dx + dy * dy);
 
         let beastColor = beastColors[i % 8];
-        let beastGlyph = beastSignatures[i % 8];
+        let isRaged = (dist <= 5.0);
 
-        if (dist <= 5.0) {
-            // PROXIMITY RAGE WARNING Skull (Flash intense red at high speed!)
-            ctx.fillStyle = '#ff1e1e';
-            ctx.shadowColor = '#ff1e1e';
-            ctx.shadowBlur = 12;
-            beastGlyph = (frameTick % 2 === 0) ? '☠' : beastSignatures[i % 8];
-        } else {
-            // Normal stalking styles
-            ctx.fillStyle = beastColor;
-            ctx.shadowColor = beastColor;
-            ctx.shadowBlur = 5;
-            beastGlyph = (Math.floor(frameTick / 2) % 2 === 0) ? beastSignatures[i % 8] : beastClaws[i % 8];
-        }
-
-        ctx.fillText(beastGlyph, enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2);
-        ctx.shadowBlur = 0;
+        drawBeast(enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2, beastColor, isRaged, frameTick);
     }
 }
 
