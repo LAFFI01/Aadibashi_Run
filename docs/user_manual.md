@@ -109,6 +109,17 @@ Run the compiled executable directly inside your active shell:
 ./bin/caveman_escape
 ```
 
+### Step 2.4: Alternative - Launch the Web Arcade Edition
+If you prefer not to compile native binary C code, or want to play instantly inside any modern web browser (fully compatible with laptops, tablets, and mobile touchscreens):
+1. Navigate to the `web/` directory.
+2. Double-click or open the [`web/index.html`](../web/index.html) file directly inside any web browser.
+3. Alternatively, you can spin up a quick, lightweight local static server using Python:
+   ```bash
+   # Run a quick local static server
+   python3 -m http.server 8000
+   ```
+   Then navigate to `http://localhost:8000/web/` in your web browser to enjoy full CRT simulated graphics and Web Audio synth sound effects!
+
 ---
 
 ## 🕹️ 3. Gameplay Instructions & Controls

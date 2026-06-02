@@ -113,6 +113,26 @@ However, it is **100% supported** on Windows through three seamless compatibilit
 
 ---
 
+## 🌐 Premium Web Version (HTML5 / CSS3 / ES6 Javascript)
+
+If you don't want to compile C code or want to play instantly in any web browser (including **mobiles, tablets, and laptops/desktops** on Windows, macOS, or Linux), we have created a **Web Arcade Edition** located in the `web/` directory!
+
+### 🕹️ Features of the Web Edition:
+*   📺 **Virtual CRT Monitor**: A beautiful retro-styled computer monitor bezel complete with horizontal scanlines, flicker effects, glare overlays, and glowing glassmorphism panels.
+*   🔊 **Real-time 8-Bit Web Audio Synthesizer**: Leverages the browser's native **Web Audio API** to synthesize authentic retro 8-bit arcade bleeps, portal sweeps, and low-frequency game-over crunch sounds in real-time with zero external file downloads!
+*   📱 **Responsive Mobile Controllers**: A virtual on-screen touch D-pad that activates automatically on mobile phones or tablets!
+*   💾 **Persistent Local Storage**: Automatically caches high scores and record-holder names across browser refreshes, duplicating our C99 binary persistence.
+
+### 🚀 How to Play the Web Version:
+Simply open the [`web/index.html`](web/index.html) file directly in any modern web browser! Or run a local static server if you prefer:
+```bash
+# Run a quick python local server from the project root
+python3 -m http.server 8000
+# Then open http://localhost:8000/web/ in your browser!
+```
+
+---
+
 ## 🎮 How to Play
 
 *   **Move**: Use **`WASD`** keys or **Arrow Keys** to steer the Caveman.

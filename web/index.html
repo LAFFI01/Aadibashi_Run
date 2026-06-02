@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console Caveman Escape - Web Arcade Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Premium retro-arcade font and modern body typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="stars-overlay"></div>
+    <div class="glow-effect"></div>
+
+    <div class="app-container">
+        <!-- Header Branding Dashboard -->
+        <header class="header">
+            <h1 class="glitch-title" data-text="CAVEMAN ESCAPE">CAVEMAN ESCAPE</h1>
+            <div class="academic-sub">NCIT Pokhara University - BCA Major Project Web Adaptation</div>
+        </header>
+
+        <!-- Main Workspace Arena -->
+        <main class="main-workspace">
+            <!-- Left Info Panel: Legends & Instructions -->
+            <section class="side-panel left-panel">
+                <div class="card panel-card">
+                    <h3 class="panel-title">📟 GAME LEGENDS</h3>
+                    <ul class="legend-list">
+                        <li><span class="legend-badge caveman">☻</span> <strong>Caveman</strong> (Player)</li>
+                        <li><span class="legend-badge star">★</span> <strong>Star</strong> (+10 Score)</li>
+                        <li><span class="legend-badge portal">▒</span> <strong>Portal</strong> (Unlocked @ 10 Stars)</li>
+                        <li><span class="legend-badge beast-calm">B</span> <strong>Beast</strong> (Chaser AI)</li>
+                        <li><span class="legend-badge beast-rage">☠</span> <strong>Beast in Rage Mode</strong></li>
+                        <li><span class="legend-badge rock">█</span> <strong>Rock Wall</strong> (Obstacle)</li>
+                    </ul>
+                </div>
+
+                <div class="card panel-card instruction-card">
+                    <h3 class="panel-title">🎮 CONTROLS</h3>
+                    <div class="kb-controls">
+                        <div class="kb-row">
+                            <span class="key">W</span> or <span class="key">▲</span>
+                        </div>
+                        <div class="kb-row">
+                            <span class="key">A</span> or <span class="key">◄</span>
+                            <span class="key">S</span> or <span class="key">▼</span>
+                            <span class="key">D</span> or <span class="key">►</span>
+                        </div>
+                    </div>
+                    <p class="kb-desc">Use keyboard or on-screen directional buttons to steer the Caveman.</p>
+                </div>
+            </section>
+
+            <!-- Center Console Frame: Virtual CRT Terminal Simulator -->
+            <section class="crt-monitor-container">
+                <div class="crt-bezel">
+                    <div class="crt-screen">
+                        <div class="scanlines"></div>
+                        <div class="crt-glare"></div>
+                        
+                        <!-- Main Canvas for rendering dynamic terminal cell buffer -->
+                        <canvas id="gameCanvas" width="960" height="400"></canvas>
+
+                        <!-- High Score Overlay / Startup Screen / Game Over Screen -->
+                        <div id="screenOverlay" class="screen-overlay active">
+                            <div class="overlay-content">
+                                <h2 id="overlayTitle">CAVEMAN ESCAPE</h2>
+                                <p id="overlaySubtitle">Press Start to Escape the Beast Horde</p>
+                                
+                                <div id="usernameInputContainer" class="hidden">
+                                    <label for="usernameInput" class="overlay-label">🏆 NEW RECORD HOLDER!</label>
+                                    <input type="text" id="usernameInput" maxlength="15" placeholder="Enter your name" value="Player 1">
+                                </div>
+
+                                <button id="startBtn" class="retro-btn">START GAME</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- CRT Monitor Physical Details -->
+                    <div class="crt-cabinet-bottom">
+                        <div class="power-led-group">
+                            <div class="power-led"></div>
+                            <span class="power-label">POWER</span>
+                        </div>
+                        <div class="sound-toggle-group">
+                            <button id="soundToggleBtn" class="sound-btn">🔊 SOUND: ON</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Info Panel: Dynamic Real-time Scores & Stats -->
+            <section class="side-panel right-panel">
+                <!-- Scoreboard HUD Card -->
+                <div class="card status-card">
+                    <div class="stat-group">
+                        <div class="stat-label">CURRENT WAVE</div>
+                        <div id="hudLevel" class="stat-value text-cyan">WAVE 1</div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label">YOUR SCORE</div>
+                        <div id="hudScore" class="stat-value text-green">0</div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label">STARS COLLECTED</div>
+                        <div id="hudStars" class="stat-value text-yellow">0 / 10</div>
+                    </div>
+                </div>
+
+                <!-- Global High Score Card -->
+                <div class="card record-card">
+                    <h3 class="panel-title">🏆 NCIT RECORD</h3>
+                    <div class="record-group">
+                        <div class="record-name" id="hudRecordHolder">NCIT Student</div>
+                        <div class="record-score" id="hudHighScore">250</div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Alerts Panel -->
+                <div id="alertBanner" class="alert-banner inactive">
+                    [ALERT] ESCAPE PORTAL UNLOCKED! RUN TO THE GATE!
+                </div>
+            </section>
+        </main>
+
+        <!-- On-Screen Virtual Controller for Mobile/Touch Devices -->
+        <footer class="mobile-controller-panel">
+            <div class="d-pad">
+                <button class="d-btn d-up" id="btnUp">▲</button>
+                <button class="d-btn d-left" id="btnLeft">◄</button>
+                <button class="d-btn d-right" id="btnRight">►</button>
+                <button class="d-btn d-down" id="btnDown">▼</button>
+                <div class="d-center"></div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Core Game Engine JS -->
+    <script src="game.js"></script>
+</body>
+</html>

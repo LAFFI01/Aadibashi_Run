@@ -1,0 +1,641 @@
+/* Core Variables & Design System */
+:root {
+    --bg-dark: #070913;
+    --bg-card: rgba(13, 17, 38, 0.7);
+    --border-color: rgba(0, 255, 200, 0.2);
+    --glow-cyan: 0 0 15px rgba(0, 255, 235, 0.4);
+    --glow-magenta: 0 0 15px rgba(255, 0, 220, 0.4);
+    --glow-green: 0 0 15px rgba(50, 255, 50, 0.4);
+    --glow-yellow: 0 0 15px rgba(255, 210, 0, 0.4);
+    --glow-red: 0 0 15px rgba(255, 30, 30, 0.6);
+    --font-heading: 'Press Start 2P', monospace;
+    --font-body: 'Outfit', sans-serif;
+    --font-monospace: 'Fira Code', monospace;
+}
+
+/* Base Document Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: #e2e8f0;
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Animated Starfield Overlay background */
+.stars-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 150px 50px, #00f0ff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 80px 220px, #ff00de, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 250px 180px, #32ff32, rgba(0,0,0,0));
+    background-size: 300px 300px;
+    opacity: 0.15;
+    z-index: 1;
+    animation: starsMover 60s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes starsMover {
+    from { background-position: 0 0; }
+    to { background-position: 300px 600px; }
+}
+
+/* Radial Glow Filter behind the CRT bezel */
+.glow-effect {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 255, 200, 0.08) 0%, rgba(255, 0, 220, 0.03) 50%, rgba(0,0,0,0) 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Master Layout Container */
+.app-container {
+    width: 100%;
+    max-width: 1300px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+}
+
+/* Header Branding Layout */
+.header {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.glitch-title {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0, 255, 235, 0.8), 0 0 20px rgba(0, 255, 235, 0.4);
+    position: relative;
+    display: inline-block;
+}
+
+.academic-sub {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-top: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Primary Grid Arena */
+.main-workspace {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Card Styling: Sleek Glassmorphism */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card:hover {
+    border-color: rgba(0, 255, 200, 0.4);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel-title {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Legend indicators styles */
+.legend-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.legend-badge {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    margin-right: 8px;
+    font-family: var(--font-monospace);
+    font-weight: 600;
+}
+
+.legend-badge.caveman { background: rgba(50, 255, 50, 0.15); color: #32ff32; border: 1px solid #32ff32; text-shadow: var(--glow-green); }
+.legend-badge.star { background: rgba(255, 210, 0, 0.15); color: #ffd200; border: 1px solid #ffd200; text-shadow: var(--glow-yellow); }
+.legend-badge.portal { background: rgba(255, 0, 220, 0.15); color: #ff00dc; border: 1px solid #ff00dc; text-shadow: var(--glow-magenta); }
+.legend-badge.beast-calm { background: rgba(255, 50, 50, 0.15); color: #ff3232; border: 1px solid #ff3232; text-shadow: var(--glow-red); }
+.legend-badge.beast-rage { background: rgba(255, 30, 30, 0.3); color: #ff1e1e; border: 1px solid #ff1e1e; animation: blinker 0.4s linear infinite; }
+.legend-badge.rock { background: #475569; color: #94a3b8; border: 1px solid #64748b; }
+
+/* Keyboard Keys Styling */
+.kb-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    margin-bottom: 12px;
+}
+
+.kb-row {
+    display: flex;
+    gap: 8px;
+}
+
+.key {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #cbd5e1;
+    font-family: var(--font-monospace);
+    font-size: 0.95rem;
+    font-weight: 600;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 0 #0f172a, 0 6px 10px rgba(0,0,0,0.4);
+}
+
+.kb-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* CRT monitor enclosure box */
+.crt-monitor-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.crt-bezel {
+    background: linear-gradient(135deg, #1e2530 0%, #11141c 100%);
+    border: 12px solid #2d3748;
+    border-radius: 36px;
+    padding: 16px;
+    box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.8),
+        inset 0 2px 5px rgba(255, 255, 255, 0.1),
+        inset 0 -2px 10px rgba(0, 0, 0, 0.7);
+    position: relative;
+    max-width: 720px;
+    width: 100%;
+}
+
+.crt-screen {
+    background-color: #03050c;
+    border: 8px solid #0f172a;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* canvas rendering size */
+#gameCanvas {
+    width: 100%;
+    height: auto;
+    max-height: 380px;
+    display: block;
+    image-rendering: pixelated;
+    position: relative;
+    z-index: 2;
+}
+
+/* Scanlines and screen flickering shaders */
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.3) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.crt-glare {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        ellipse at 0% 0%, 
+        rgba(255, 255, 255, 0.05) 0%, 
+        rgba(255, 255, 255, 0) 60%
+    );
+    z-index: 6;
+    pointer-events: none;
+}
+
+/* CRT startup screen overlay */
+.screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(3, 5, 12, 0.95);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.screen-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 500px;
+}
+
+#overlayTitle {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: #32ff32;
+    text-shadow: var(--glow-green);
+    letter-spacing: 1px;
+    animation: textFlash 1.5s infinite;
+}
+
+#overlaySubtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.overlay-label {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    color: #ffd200;
+    text-shadow: var(--glow-yellow);
+    margin-bottom: 10px;
+}
+
+#usernameInput {
+    background: #0f172a;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    text-align: center;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#usernameInput:focus {
+    border-color: #00ffeb;
+    box-shadow: var(--glow-cyan);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* tactile button animations */
+.retro-btn {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    padding: 14px 28px;
+    color: #070913;
+    background: linear-gradient(135deg, #00ffeb 0%, #00b4d8 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 255, 235, 0.4), 0 4px 0 #007799;
+    font-weight: 800;
+    letter-spacing: 1px;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.retro-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 10px rgba(0, 255, 235, 0.2), 0 0px 0 #007799;
+}
+
+.retro-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* CRT Physical bottom chassis details */
+.crt-cabinet-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px dashed rgba(255,255,255,0.05);
+}
+
+.power-led-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.power-led {
+    width: 10px;
+    height: 10px;
+    background-color: #32ff32;
+    border-radius: 50%;
+    box-shadow: var(--glow-green), inset 0 1px 1px rgba(255,255,255,0.8);
+    animation: ledPulse 2s infinite;
+}
+
+@keyframes ledPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+.power-label {
+    font-family: var(--font-heading);
+    font-size: 0.5rem;
+    color: #475569;
+    letter-spacing: 1px;
+}
+
+.sound-btn {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: var(--font-heading);
+    font-size: 0.55rem;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.sound-btn:hover {
+    color: #fff;
+    border-color: #00ffeb;
+}
+
+/* Right Status Panel Scoreboard HUD values */
+.status-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-group {
+    border-left: 3px solid rgba(255,255,255,0.1);
+    padding-left: 12px;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-family: var(--font-monospace);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.text-green { color: #32ff32; text-shadow: var(--glow-green); }
+.text-cyan { color: #00ffeb; text-shadow: var(--glow-cyan); }
+.text-yellow { color: #ffd200; text-shadow: var(--glow-yellow); }
+
+.record-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.record-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 210, 0, 0.1);
+}
+
+.record-name {
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    color: #fff;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.record-score {
+    font-family: var(--font-monospace);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffd200;
+    text-shadow: var(--glow-yellow);
+}
+
+/* Alert banner */
+.alert-banner {
+    background: rgba(255, 0, 220, 0.1);
+    border: 1px dashed rgba(255, 0, 220, 0.5);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ff00dc;
+    text-align: center;
+    line-height: 1.4;
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+}
+
+.alert-banner.active {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    margin-top: 10px;
+    animation: bannerAlertBlink 1.5s infinite;
+}
+
+@keyframes bannerAlertBlink {
+    0%, 100% { border-color: rgba(255, 0, 220, 0.5); background-color: rgba(255, 0, 220, 0.1); box-shadow: none; }
+    50% { border-color: rgba(255, 0, 220, 1); background-color: rgba(255, 0, 220, 0.2); box-shadow: var(--glow-magenta); }
+}
+
+/* Mobile Virtual Controller D-Pad Layout */
+.mobile-controller-panel {
+    display: none;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.d-pad {
+    position: relative;
+    width: 160px;
+    height: 160px;
+}
+
+.d-btn {
+    position: absolute;
+    background: #1e293b;
+    border: 2px solid #475569;
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.1s, background-color 0.1s;
+}
+
+.d-btn:active {
+    background: #00ffeb;
+    color: #000;
+    border-color: #00ffeb;
+    transform: scale(0.95);
+}
+
+.d-up { top: 0; left: 55px; }
+.d-down { bottom: 0; left: 55px; }
+.d-left { top: 55px; left: 0; }
+.d-right { top: 55px; right: 0; }
+
+.d-center {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background: #0f172a;
+    border: 2px solid #334155;
+    top: 58px;
+    left: 58px;
+    border-radius: 50%;
+}
+
+/* Standard animations */
+@keyframes textFlash {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+@keyframes blinker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Full responsive layout rules */
+@media (max-width: 1100px) {
+    .main-workspace {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .crt-monitor-container {
+        grid-column: 1 / span 2;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-workspace {
+        grid-template-columns: 1fr;
+    }
+    
+    .crt-monitor-container {
+        grid-column: 1;
+    }
+    
+    .left-panel {
+        display: none; /* Hide legends on very small screens to maintain gaming focus */
+    }
+    
+    .mobile-controller-panel {
+        display: flex; /* Activate touch controller on small screens */
+    }
+    
+    .glitch-title {
+        font-size: 1.6rem;
+    }
+}
