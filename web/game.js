@@ -213,7 +213,7 @@ function startGame() {
     player.y = 2;
     player.dir = 'NONE';
 
-    enemies = [{ x: GRID_WIDTH - 3, y: GRID_HEIGHT - 2, active: true }];
+    enemies = [{ x: GRID_WIDTH - 3, y: GRID_HEIGHT - 2, active: true, type: 'MAMMOTH' }];
     escapeGate.active = false;
 
     // Reset monitor shake at start
@@ -354,6 +354,7 @@ function gameLoopTick() {
 
         // repopulate enemies strategically in corners
         enemies = [];
+        let numDinos = Math.floor((currentLevel - 1) / 3);
         for (let i = 0; i < enemyCount; i++) {
             let ex = GRID_WIDTH - 3;
             let ey = GRID_HEIGHT - 2;
@@ -370,21 +371,31 @@ function gameLoopTick() {
                     if (!checkCollision(ex, ey) && (ex !== player.x || ey !== player.y)) v = true;
                 }
             }
-            enemies.push({ x: ex, y: ey, active: true });
+            
+            // Assign type: Boss Dino for the first numDinos, normal Mammoth for rest
+            let type = (i < numDinos) ? 'DINO' : 'MAMMOTH';
+            enemies.push({ x: ex, y: ey, active: true, type: type });
         }
 
         spawnFood();
         updateHud();
     }
 
-    // 4. Update Automated Enemy AI hunting paths (Moves every 2 clock ticks)
-    if (frameTick % 2 === 0) {
-        let anyBeastClose = false;
+    // 4. Update Automated Enemy AI hunting paths (Speed: Dino moves every tick, Mammoth moves every 2 ticks)
+    let anyBeastClose = false;
 
-        for (let e = 0; e < enemies.length; e++) {
-            let enemy = enemies[e];
-            if (!enemy.active) continue;
+    for (let e = 0; e < enemies.length; e++) {
+        let enemy = enemies[e];
+        if (!enemy.active) continue;
 
+        let shouldMove = false;
+        if (enemy.type === 'DINO') {
+            shouldMove = true; // Every tick (Double Speed!)
+        } else {
+            shouldMove = (frameTick % 2 === 0); // Every 2 ticks (Normal Speed)
+        }
+
+        if (shouldMove) {
             // Use Breadth-First Search (BFS) pathfinder
             let nextStep = findBfsNextStep(enemy, player, e);
             enemy.x = nextStep.x;
@@ -395,23 +406,23 @@ function gameLoopTick() {
                 gameOver(false);
                 return;
             }
-
-            // Proximity shake triggers checks
-            let dx = enemy.x - player.x;
-            let dy = enemy.y - player.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist <= 5.0) {
-                anyBeastClose = true;
-            }
         }
 
-        // Apply screen shake
-        const bezel = document.querySelector('.crt-bezel');
-        if (anyBeastClose && gameActive) {
-            bezel.classList.add('crt-shake');
-        } else {
-            bezel.classList.remove('crt-shake');
+        // Proximity shake checks (evaluated every tick)
+        let dx = enemy.x - player.x;
+        let dy = enemy.y - player.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= 5.0) {
+            anyBeastClose = true;
         }
+    }
+
+    // Apply screen shake
+    const bezel = document.querySelector('.crt-bezel');
+    if (anyBeastClose && gameActive) {
+        bezel.classList.add('crt-shake');
+    } else {
+        bezel.classList.remove('crt-shake');
     }
 
     // 5. Evaluate Caught checks
@@ -509,78 +520,125 @@ function drawCaveman(cx, cy, dir, tick) {
     ctx.restore();
 }
 
-// Draw terrifying AI Beast dynamically
-function drawBeast(cx, cy, color, isRaged, tick) {
+// Draw terrifying early-age Mammoth dynamically
+function drawMammoth(cx, cy, color, isRaged, tick) {
     ctx.save();
-
-    let bodyColor = isRaged ? '#ff1e1e' : color;
+    
+    // Fuzzy brown or angry red
+    let bodyColor = isRaged ? '#ff1e1e' : '#7c2d12';
     ctx.fillStyle = bodyColor;
     
     ctx.shadowColor = bodyColor;
     ctx.shadowBlur = isRaged ? 12 : 5;
 
-    // Beast Torso
+    // Strong stocky legs (walking animation)
+    let legMotion = (tick % 2 === 0) ? 2 : -2;
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1, 5.5, 0, Math.PI * 2);
+    // Front leg
+    ctx.moveTo(cx - 3, cy + 3);
+    ctx.lineTo(cx - 5, cy + 8 + legMotion);
+    // Back leg
+    ctx.moveTo(cx + 3, cy + 3);
+    ctx.lineTo(cx + 5, cy + 8 - legMotion);
+    ctx.stroke();
+
+    // Massive Mammoth Torso (Egg-like with shoulder hump)
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 1, 7.5, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Head
+    // Head (merges with hump)
     ctx.beginPath();
-    ctx.arc(cx, cy - 4, 4.5, 0, Math.PI * 2);
+    ctx.arc(cx - 4, cy - 2, 4.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Fierce Spiky Horns (White)
-    ctx.fillStyle = '#f8fafc';
+    // Ear flaps (darker brown)
+    ctx.fillStyle = '#451a03';
     ctx.beginPath();
-    ctx.moveTo(cx - 4, cy - 7);
-    ctx.lineTo(cx - 6, cy - 12);
-    ctx.lineTo(cx - 1.5, cy - 8);
-    
-    ctx.moveTo(cx + 4, cy - 7);
-    ctx.lineTo(cx + 6, cy - 12);
-    ctx.lineTo(cx + 1.5, cy - 8);
+    ctx.arc(cx - 1, cy - 3, 1.8, 0, Math.PI * 2);
     ctx.fill();
+
+    // Massive Curved Tusks (White sweeping forward and up!)
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy - 1);
+    ctx.bezierCurveTo(cx - 13, cy - 2, cx - 12, cy - 8, cx - 7, cy - 9);
+    ctx.stroke();
 
     // Glowing Eyes
     ctx.fillStyle = isRaged ? '#ffffff' : '#facc15';
-    ctx.fillRect(cx - 2.5, cy - 5.5, 1.2, 1.2);
-    ctx.fillRect(cx + 1.3, cy - 5.5, 1.2, 1.2);
+    ctx.fillRect(cx - 7, cy - 4.5, 1.2, 1.2);
 
-    // Sharp fangs inside the maw
-    ctx.strokeStyle = '#f8fafc';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(cx - 3, cy - 1);
-    ctx.lineTo(cx, cy - 2.5);
-    ctx.lineTo(cx + 3, cy - 1);
-    ctx.stroke();
-
-    // Claws / Legs (Waving movement)
+    // Prehensile Trunk (waving up and down)
     ctx.strokeStyle = bodyColor;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
+    ctx.moveTo(cx - 6, cy - 2);
+    ctx.quadraticCurveTo(cx - 11, cy + 2 + legMotion, cx - 10 - legMotion, cy + 5);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// Draw terrifying early-age Dino (larger, towering, super fast scaly predator!)
+function drawDino(cx, cy, color, isRaged, tick) {
+    ctx.save();
+    
+    // Scaly green or angry boss red
+    let bodyColor = isRaged ? '#ef4444' : '#15803d';
+    ctx.fillStyle = bodyColor;
+    
+    ctx.shadowColor = bodyColor;
+    ctx.shadowBlur = isRaged ? 14 : 7;
 
     let motion = (tick % 2 === 0) ? 2 : -2;
 
-    // Front legs
-    ctx.moveTo(cx - 4, cy + 3);
-    ctx.lineTo(cx - 7, cy + 8 + motion);
-    ctx.moveTo(cx + 4, cy + 3);
-    ctx.lineTo(cx + 7, cy + 8 - motion);
-
-    // Back legs
-    ctx.moveTo(cx - 3, cy + 5);
-    ctx.lineTo(cx - 5 + motion, cy + 9);
-    ctx.moveTo(cx + 3, cy + 5);
-    ctx.lineTo(cx + 5 - motion, cy + 9);
+    // Heavy Bipedal Legs
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2, cy + 4);
+    ctx.lineTo(cx - 5, cy + 10 + motion);
+    ctx.moveTo(cx + 2, cy + 4);
+    ctx.lineTo(cx + 4, cy + 10 - motion);
     ctx.stroke();
 
-    // Tail (Waving spiky dynamic tail)
-    ctx.strokeStyle = bodyColor;
-    ctx.lineWidth = 2;
+    // Towering Dino Body
     ctx.beginPath();
-    ctx.moveTo(cx + 5, cy + 2);
-    ctx.quadraticCurveTo(cx + 9, cy + 2 + motion, cx + 11 + motion, cy - 2);
+    ctx.ellipse(cx, cy + 1, 9.5, 7, -Math.PI / 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Strong scaly neck reaching high
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = bodyColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy - 2);
+    ctx.lineTo(cx - 8, cy - 8);
+    ctx.stroke();
+
+    // Large Predator Skull
+    ctx.beginPath();
+    ctx.ellipse(cx - 9, cy - 8, 5.5, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Razor sharp teeth inside jaws
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - 12, cy - 6, 1, 1);
+    ctx.fillRect(cx - 10, cy - 6, 1, 1);
+
+    // Fierce glowing red eyes
+    ctx.fillStyle = isRaged ? '#ffffff' : '#ef4444';
+    ctx.fillRect(cx - 11, cy - 9.5, 1.5, 1.5);
+
+    // Powerful balancing tail (swinging)
+    ctx.strokeStyle = bodyColor;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy + 1);
+    ctx.quadraticCurveTo(cx + 14, cy + 2 + motion, cx + 17 + motion, cy - 4);
     ctx.stroke();
 
     ctx.restore();
@@ -667,7 +725,11 @@ function renderScreen() {
         let beastColor = beastColors[i % 8];
         let isRaged = (dist <= 5.0);
 
-        drawBeast(enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2, beastColor, isRaged, frameTick);
+        if (enemy.type === 'DINO') {
+            drawDino(enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2, beastColor, isRaged, frameTick);
+        } else {
+            drawMammoth(enemy.x * cellWidth + cellWidth / 2, enemy.y * cellHeight + cellHeight / 2, beastColor, isRaged, frameTick);
+        }
     }
 }
 
