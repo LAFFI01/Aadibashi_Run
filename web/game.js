@@ -368,7 +368,7 @@ function gameLoopTick() {
 
         // repopulate enemies strategically in corners
         enemies = [];
-        let numDinos = Math.floor((currentLevel - 1) / 3);
+        let numDinos = (currentLevel >= 3) ? Math.floor((currentLevel - 3) / 2) + 1 : 0;
         for (let i = 0; i < enemyCount; i++) {
             let ex = GRID_WIDTH - 3;
             let ey = GRID_HEIGHT - 2;
@@ -601,59 +601,100 @@ function drawMammoth(cx, cy, color, isRaged, tick) {
 function drawDino(cx, cy, color, isRaged, tick) {
     ctx.save();
     
-    // Scaly green or angry boss red
-    let bodyColor = isRaged ? '#ef4444' : '#15803d';
-    ctx.fillStyle = bodyColor;
+    // Dino scales are deep green/gold highlights or angry flashing red
+    let baseColor = isRaged ? '#ff1e1e' : '#16a34a'; 
+    let scaleColor = isRaged ? '#ffffff' : '#eab308'; // Gold scales
     
-    ctx.shadowColor = bodyColor;
-    ctx.shadowBlur = isRaged ? 14 : 7;
+    ctx.fillStyle = baseColor;
+    ctx.shadowColor = baseColor;
+    ctx.shadowBlur = isRaged ? 16 : 8;
 
     let motion = (tick % 2 === 0) ? 2 : -2;
 
-    // Heavy Bipedal Legs
-    ctx.strokeStyle = bodyColor;
+    // Strong Clawed bipedal legs (waving with claw toes!)
+    ctx.strokeStyle = baseColor;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(cx - 2, cy + 4);
     ctx.lineTo(cx - 5, cy + 10 + motion);
+    ctx.lineTo(cx - 8, cy + 11 + motion); // Claw foot
+    
     ctx.moveTo(cx + 2, cy + 4);
     ctx.lineTo(cx + 4, cy + 10 - motion);
+    ctx.lineTo(cx + 1, cy + 11 - motion); // Claw foot
     ctx.stroke();
 
-    // Towering Dino Body
+    // Large Dino Torso with gold plates on the back
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 1, 9.5, 7, -Math.PI / 12, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy + 1, 10, 7.5, -Math.PI / 12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Strong scaly neck reaching high
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = bodyColor;
+    // Golden Scale Plates along the spine
+    ctx.fillStyle = scaleColor;
+    ctx.beginPath();
+    ctx.arc(cx + 3, cy - 5, 2, 0, Math.PI * 2);
+    ctx.arc(cx - 2, cy - 6, 2.2, 0, Math.PI * 2);
+    ctx.arc(cx - 6, cy - 4, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Long powerful scaly neck
+    ctx.lineWidth = 5.5;
+    ctx.strokeStyle = baseColor;
     ctx.beginPath();
     ctx.moveTo(cx - 4, cy - 2);
-    ctx.lineTo(cx - 8, cy - 8);
+    ctx.lineTo(cx - 8, cy - 9);
     ctx.stroke();
 
-    // Large Predator Skull
+    // Snapping Snout / Head (Snaps open/shut based on motion tick!)
+    ctx.fillStyle = baseColor;
+    let snapAngle = (tick % 2 === 0) ? 0.2 : 0;
+    
+    // Draw Upper Jaw
+    ctx.save();
+    ctx.translate(cx - 8, cy - 9);
+    ctx.rotate(-snapAngle);
     ctx.beginPath();
-    ctx.ellipse(cx - 9, cy - 8, 5.5, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(-2, -2, 5, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Razor sharp teeth
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-6, 0, 1.2, 1.2);
+    ctx.fillRect(-4, 0, 1.2, 1.2);
+    ctx.restore();
+
+    // Draw Lower Jaw
+    ctx.save();
+    ctx.translate(cx - 8, cy - 9);
+    ctx.rotate(snapAngle);
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.ellipse(-1.5, 1, 4.5, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Lower Teeth
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-5, -1, 1.2, 1.2);
+    ctx.fillRect(-3, -1, 1.2, 1.2);
+    ctx.restore();
+
+    // Glowing predator eye (flashes between yellow and red)
+    ctx.fillStyle = isRaged ? '#ffffff' : '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy - 11.5, 1.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Razor sharp teeth inside jaws
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx - 12, cy - 6, 1, 1);
-    ctx.fillRect(cx - 10, cy - 6, 1, 1);
-
-    // Fierce glowing red eyes
-    ctx.fillStyle = isRaged ? '#ffffff' : '#ef4444';
-    ctx.fillRect(cx - 11, cy - 9.5, 1.5, 1.5);
-
-    // Powerful balancing tail (swinging)
-    ctx.strokeStyle = bodyColor;
-    ctx.lineWidth = 3.5;
+    // Long, thick, whipping tail (swings side to side)
+    ctx.strokeStyle = baseColor;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(cx + 8, cy + 1);
-    ctx.quadraticCurveTo(cx + 14, cy + 2 + motion, cx + 17 + motion, cy - 4);
+    ctx.quadraticCurveTo(cx + 15, cy + 2 + motion, cx + 19 + motion, cy - 4);
     ctx.stroke();
+    
+    // Spikes on the tail tip (Gold)
+    ctx.fillStyle = scaleColor;
+    ctx.beginPath();
+    ctx.arc(cx + 19 + motion, cy - 4, 1.8, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
 }
