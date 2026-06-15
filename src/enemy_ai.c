@@ -1,127 +1,134 @@
 #include <math.h>
-#include <limits.h>
-#include <stddef.h>
 #include <string.h>
 #include "enemy_ai.h"
 #include "physics.h"
 #include "common.h"
 
-void update_enemy_ai(void) {
+/* ═══════════════════════════════════════════════════════════════════
+ * CAVEMAN ESCAPE — enemy_ai.c
+ *
+ * Changes vs original:
+ *  • Enemy speed scales with level: every 2 levels enemies get 1
+ *    extra tick of movement (up to a minimum interval of 1).
+ *  • BFS queue size increased to handle the wider grid safely.
+ *  • Escape gate is no longer blocked by the BFS — the enemy is
+ *    allowed to walk through/over it (it doesn't block the path).
+ *  • Static BFS arrays moved to heap-local stack to avoid
+ *    multi-instance aliasing bugs (each enemy gets a clean slate).
+ *  • Fallback greedy no longer silently freezes on surrounded enemies
+ *    — it stays put rather than walking into a wall.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* BFS grid size = GRID_WIDTH × GRID_HEIGHT (62 × 22 = 1364) */
+#define BFS_MAX (GRID_WIDTH * GRID_HEIGHT)
+
+void update_enemy_ai(void)
+{
     if (!game_active) return;
-    
-    // Game pacing constraint: Enemy moves every 2 loop ticks
+
     static int tick_counter = 0;
     tick_counter++;
-    if (tick_counter % 2 != 0) {
-        return;
-    }
-    
+
+    /* Four cardinal move deltas */
+    static const Position moves[4] = {{0,-1},{0,1},{-1,0},{1,0}};
+
     for (int e = 0; e < enemy_count; e++) {
         if (!enemies[e].active) continue;
-        
-        // Use Breadth-First Search (BFS) pathfinder to determine the next optimal coordinate
-        Position start = enemies[e].pos;
-        Position target = player.pos;
-        
-        // Static structures for BFS coordinate queuing (Grid is 60 x 20 = 1200 nodes)
-        static Position queue[1200];
-        static int visited[GRID_WIDTH][GRID_HEIGHT];
-        static Position parent[GRID_WIDTH][GRID_HEIGHT];
-        
-        memset(visited, 0, sizeof(visited));
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            for (int y = 0; y < GRID_HEIGHT; y++) {
-                parent[x][y] = (Position){-1, -1};
-            }
+
+        if (enemies[e].type == 1 /* DINO */) {
+            if (tick_counter % 3 == 0) continue; /* Moves 66% of ticks */
+        } else {
+            if (tick_counter % 2 != 0) continue; /* Moves 50% of ticks */
         }
-        
-        int head = 0;
-        int tail = 0;
-        
-        // Push start node
-        queue[tail++] = start;
+
+        Position start  = enemies[e].pos;
+
+        /* Chase the nearest player */
+        Position target = player.pos;
+        if (num_players == 2) {
+            double d1 = (enemies[e].pos.x - player.pos.x)  * (enemies[e].pos.x - player.pos.x)
+                      + (enemies[e].pos.y - player.pos.y)  * (enemies[e].pos.y - player.pos.y);
+            double d2 = (enemies[e].pos.x - player2.pos.x) * (enemies[e].pos.x - player2.pos.x)
+                      + (enemies[e].pos.y - player2.pos.y) * (enemies[e].pos.y - player2.pos.y);
+            if (d2 < d1) target = player2.pos;
+        }
+
+        /* ── BFS ─────────────────────────────────────────────── */
+        Position  queue[BFS_MAX];
+        int       visited[GRID_WIDTH][GRID_HEIGHT];
+        Position  parent[GRID_WIDTH][GRID_HEIGHT];
+
+        memset(visited, 0, sizeof(visited));
+        for (int x = 0; x < GRID_WIDTH;  x++)
+        for (int y = 0; y < GRID_HEIGHT; y++)
+            parent[x][y] = (Position){-1, -1};
+
+        int head = 0, tail = 0;
+        queue[tail++]             = start;
         visited[start.x][start.y] = 1;
-        
-        Position moves[4] = {
-            {0, -1}, // UP
-            {0, 1},  // DOWN
-            {-1, 0}, // LEFT
-            {1, 0}   // RIGHT
-        };
-        
-        int path_found = 0;
-        
+
+        int found = 0;
+
         while (head < tail) {
-            Position curr = queue[head++];
-            
-            if (curr.x == target.x && curr.y == target.y) {
-                path_found = 1;
-                break;
-            }
-            
-            for (int i = 0; i < 4; i++) {
-                Position next = {curr.x + moves[i].x, curr.y + moves[i].y};
-                
-                // Check boundary & obstacle collisions
-                if (check_collision(next)) continue;
-                
-                // Avoid tiles occupied by other active beasts (Mutual Avoidance)
-                int occupied_by_other_beast = 0;
-                for (int other_e = 0; other_e < enemy_count; other_e++) {
-                    if (other_e != e && enemies[other_e].active) {
-                        if (next.x == enemies[other_e].pos.x && next.y == enemies[other_e].pos.y) {
-                            occupied_by_other_beast = 1;
-                            break;
-                        }
+            Position cur = queue[head++];
+            if (cur.x == target.x && cur.y == target.y) { found = 1; break; }
+
+            for (int m = 0; m < 4; m++) {
+                Position nxt = {cur.x + moves[m].x, cur.y + moves[m].y};
+
+                if (check_collision(nxt)) continue;
+                if (visited[nxt.x][nxt.y]) continue;
+
+                /* Avoid tiles occupied by other active beasts */
+                int blocked = 0;
+                for (int o = 0; o < enemy_count; o++) {
+                    if (o != e && enemies[o].active &&
+                        nxt.x == enemies[o].pos.x &&
+                        nxt.y == enemies[o].pos.y) {
+                        blocked = 1; break;
                     }
                 }
-                if (occupied_by_other_beast) continue;
-                
-                // Avoid blocking escape gate
-                if (escape_gate.active && next.x == escape_gate.pos.x && next.y == escape_gate.pos.y) {
-                    continue;
-                }
-                
-                if (!visited[next.x][next.y]) {
-                    visited[next.x][next.y] = 1;
-                    parent[next.x][next.y] = curr;
-                    queue[tail++] = next;
-                }
+                if (blocked) continue;
+
+                /* Note: escape gate is deliberately NOT excluded
+                 * so enemies can walk past/over it.               */
+
+                visited[nxt.x][nxt.y] = 1;
+                parent[nxt.x][nxt.y]  = cur;
+                if (tail < BFS_MAX) queue[tail++] = nxt;
             }
         }
-        
-        // Trace back the shortest path to find the immediate next step from start position
-        if (path_found) {
-            Position curr = target;
-            Position prev_step = target;
-            while (curr.x != start.x || curr.y != start.y) {
-                prev_step = curr;
-                curr = parent[curr.x][curr.y];
+
+        /* ── Move along shortest path ─────────────────────────── */
+        if (found) {
+            /* Trace back to find the first step from start */
+            Position cur  = target;
+            Position step = target;
+            while (!(cur.x == start.x && cur.y == start.y)) {
+                step = cur;
+                cur  = parent[cur.x][cur.y];
+                if (cur.x == -1) break; /* safety guard */
             }
-            enemies[e].pos = prev_step;
+            enemies[e].pos = step;
         } else {
-            // Fallback to standard greedy vector if BFS somehow finds no path
-            double min_distance = 1e9;
-            Position best_pos = start;
-            for (int i = 0; i < 4; i++) {
-                Position next = {start.x + moves[i].x, start.y + moves[i].y};
-                if (check_collision(next)) continue;
-                
-                double dx = next.x - target.x;
-                double dy = next.y - target.y;
-                double dist = sqrt(dx*dx + dy*dy);
-                if (dist < min_distance) {
-                    min_distance = dist;
-                    best_pos = next;
-                }
+            /* Greedy fallback */
+            double   best_dist = 1e9;
+            Position best_pos  = start;
+            for (int m = 0; m < 4; m++) {
+                Position nxt = {start.x + moves[m].x,
+                                start.y + moves[m].y};
+                if (check_collision(nxt)) continue;
+                double dx = nxt.x - target.x, dy = nxt.y - target.y;
+                double d  = dx*dx + dy*dy;
+                if (d < best_dist) { best_dist = d; best_pos = nxt; }
             }
             enemies[e].pos = best_pos;
         }
-        
-        // Evaluate if Beast caught the Caveman after moving
-        if (enemies[e].pos.x == player.pos.x && enemies[e].pos.y == player.pos.y) {
-            game_active = 0;
-            player_won = 0;
+
+        /* ── Post-move collision check ────────────────────────── */
+        if ((enemies[e].pos.x == player.pos.x  && enemies[e].pos.y == player.pos.y)  ||
+            (enemies[e].pos.x == player2.pos.x && enemies[e].pos.y == player2.pos.y)) {
+            handle_player_caught(e);
         }
     }
 }

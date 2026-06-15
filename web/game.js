@@ -43,6 +43,7 @@ const CAVERN_THEMES = [
 
 // Game State Variables
 let playerLives = 3;
+let numPlayers = 1;
 
 // Canvas Configuration
 const canvas = document.getElementById('gameCanvas');
@@ -136,6 +137,7 @@ let gameLoopTimer = null;
 
 // Game Entities
 let player = { x: 2, y: 2, dir: 'NONE' };
+let player2 = { x: 3, y: 2, dir: 'NONE' };
 let enemies = [];
 let enemyCount = 1;
 let food = { x: 0, y: 0, active: false };
@@ -186,7 +188,7 @@ function spawnFood() {
         ry = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
         
         if (checkCollision(rx, ry)) continue;
-        if (rx === player.x && ry === player.y) continue;
+        if ((rx === player.x && ry === player.y) || (rx === player2.x && ry === player2.y)) continue;
         if (rx === escapeGate.x && ry === escapeGate.y) continue;
         
         let spawnOnEnemy = false;
@@ -216,7 +218,7 @@ function spawnAxe() {
         ry = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
         
         if (checkCollision(rx, ry)) continue;
-        if (rx === player.x && ry === player.y) continue;
+        if ((rx === player.x && ry === player.y) || (rx === player2.x && ry === player2.y)) continue;
         if (rx === food.x && ry === food.y) continue;
         if (rx === escapeGate.x && ry === escapeGate.y) continue;
         
@@ -299,6 +301,10 @@ function startGame() {
     player.x = 2;
     player.y = 2;
     player.dir = 'NONE';
+    player2.x = 3;
+    player2.y = 2;
+    player2.dir = 'NONE';
+    if(numPlayers === 1) { player2.x = -1; player2.y = -1; }
 
     enemies = [{ x: GRID_WIDTH - 3, y: GRID_HEIGHT - 2, active: true, type: 'MAMMOTH' }];
     escapeGate.active = false;
@@ -411,9 +417,29 @@ function gameLoopTick() {
             player.dir = 'NONE'; // Block and rest at wall boundaries
         }
     }
+    
+    if (numPlayers === 2) {
+        let nextX2 = player2.x;
+        let nextY2 = player2.y;
+
+        if (player2.dir === 'UP') nextY2--;
+        else if (player2.dir === 'DOWN') nextY2++;
+        else if (player2.dir === 'LEFT') nextX2--;
+        else if (player2.dir === 'RIGHT') nextX2++;
+
+        if (player2.dir !== 'NONE') {
+            if (!checkCollision(nextX2, nextY2)) {
+                player2.x = nextX2;
+                player2.y = nextY2;
+                if (frameTick % 2 === 0) playRetroSound('move');
+            } else {
+                player2.dir = 'NONE';
+            }
+        }
+    }
 
     // 2. Evaluate Star Food items collection
-    if (food.active && player.x === food.x && player.y === food.y) {
+    if (food.active && ((player.x === food.x && player.y === food.y) || (player2.x === food.x && player2.y === food.y))) {
         currentScore += 10;
         playRetroSound('star');
         
@@ -427,7 +453,7 @@ function gameLoopTick() {
     }
 
     // 2b. Evaluate Axe weapon items collection
-    if (axe.active && player.x === axe.x && player.y === axe.y) {
+    if (axe.active && ((player.x === axe.x && player.y === axe.y) || (player2.x === axe.x && player2.y === axe.y))) {
         playerHasAxe = true;
         axe.active = false;
         playRetroSound('star'); // weapon pickup chime
@@ -435,7 +461,7 @@ function gameLoopTick() {
     }
 
     // 3. Evaluate Level Escapes transitions
-    if (escapeGate.active && player.x === escapeGate.x && player.y === escapeGate.y) {
+    if (escapeGate.active && ((player.x === escapeGate.x && player.y === escapeGate.y) || (player2.x === escapeGate.x && player2.y === escapeGate.y))) {
         currentLevel++;
         playRetroSound('levelup');
         triggerHappyTime(); // Celebrates level up milestone!
@@ -504,22 +530,30 @@ function gameLoopTick() {
 
         if (shouldMove) {
             // Use Breadth-First Search (BFS) pathfinder
-            let nextStep = findBfsNextStep(enemy, player, e);
+            
+            // AI chooses the closer player
+            let dist1 = Math.sqrt(Math.pow(enemy.x - player.x, 2) + Math.pow(enemy.y - player.y, 2));
+            let dist2 = Math.sqrt(Math.pow(enemy.x - player2.x, 2) + Math.pow(enemy.y - player2.y, 2));
+            let targetPlayer = (dist1 < dist2) ? player : player2;
+            let nextStep = findBfsNextStep(enemy, targetPlayer, e);
             enemy.x = nextStep.x;
             enemy.y = nextStep.y;
 
             // Check if player caught during beast update
-            if (enemy.x === player.x && enemy.y === player.y) {
+            if ((enemy.x === player.x && enemy.y === player.y) || (enemy.x === player2.x && enemy.y === player2.y)) {
                 playerCaught();
                 return;
             }
         }
 
         // Proximity shake checks (evaluated every tick)
-        let dx = enemy.x - player.x;
-        let dy = enemy.y - player.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= 5.0) {
+        let dx1 = enemy.x - player.x;
+        let dy1 = enemy.y - player.y;
+        let dist1_shake = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+        let dx2 = enemy.x - player2.x;
+        let dy2 = enemy.y - player2.y;
+        let dist2_shake = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        if (dist1_shake <= 5.0 || dist2_shake <= 5.0) {
             anyBeastClose = true;
         }
     }
@@ -534,7 +568,7 @@ function gameLoopTick() {
 
     // 5. Evaluate Caught checks
     for (let enemy of enemies) {
-        if (enemy.active && enemy.x === player.x && enemy.y === player.y) {
+        if (enemy.active && ((enemy.x === player.x && enemy.y === player.y) || (enemy.x === player2.x && enemy.y === player2.y))) {
             playerCaught();
             return;
         }
@@ -981,6 +1015,7 @@ function renderScreen() {
 
     // Draw Caveman Human Player
     drawCaveman(player.x * cellWidth + cellWidth / 2, player.y * cellHeight + cellHeight / 2, player.dir, frameTick);
+    if (numPlayers === 2) drawCaveman(player2.x * cellWidth + cellWidth / 2, player2.y * cellHeight + cellHeight / 2, player2.dir, frameTick);
 
     // Draw Chaser Beasts (Dynamic Styles, Colors, and Proximity Rage Flashers)
     const beastColors = ['#ef4444', '#f59e0b', '#ec4899', '#06b6d4', '#3b82f6', '#f97316', '#a855f7', '#ffffff'];
@@ -1010,7 +1045,7 @@ function playerCaught() {
     if (playerHasAxe) {
         // Find the beast that caught the player and defeat it!
         for (let enemy of enemies) {
-            if (enemy.active && enemy.x === player.x && enemy.y === player.y) {
+            if (enemy.active && ((enemy.x === player.x && enemy.y === player.y) || (enemy.x === player2.x && enemy.y === player2.y))) {
                 enemy.active = false; // Kill only this one animal!
                 break;
             }
@@ -1116,9 +1151,10 @@ function triggerHappyTime() {
     }
 }
 
-function handleDirectionInput(dir) {
+function handleDirectionInput(dir, playerNum) {
     if (!gameActive) return;
-    player.dir = dir;
+    if (playerNum === 1) player.dir = dir;
+    else if (playerNum === 2) player2.dir = dir;
 }
 
 // Bind keyboard hooks (with page scroll prevention for embedded iframe portal compatibility)
@@ -1132,17 +1168,29 @@ window.addEventListener('keydown', (e) => {
     
     // Support WASD + Arrows
     switch (e.key) {
-        case 'w': case 'W': case 'ArrowUp':
-            handleDirectionInput('UP');
+        case 'w': case 'W':
+            handleDirectionInput('UP', 1);
             break;
-        case 's': case 'S': case 'ArrowDown':
-            handleDirectionInput('DOWN');
+        case 'ArrowUp':
+            handleDirectionInput('UP', 2);
             break;
-        case 'a': case 'A': case 'ArrowLeft':
-            handleDirectionInput('LEFT');
+        case 's': case 'S':
+            handleDirectionInput('DOWN', 1);
             break;
-        case 'd': case 'D': case 'ArrowRight':
-            handleDirectionInput('RIGHT');
+        case 'ArrowDown':
+            handleDirectionInput('DOWN', 2);
+            break;
+        case 'a': case 'A':
+            handleDirectionInput('LEFT', 1);
+            break;
+        case 'ArrowLeft':
+            handleDirectionInput('LEFT', 2);
+            break;
+        case 'd': case 'D':
+            handleDirectionInput('RIGHT', 1);
+            break;
+        case 'ArrowRight':
+            handleDirectionInput('RIGHT', 2);
             break;
         case 'Escape':
             gameOver(false);
@@ -1151,10 +1199,10 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Bind On-Screen Touch D-pad buttons (for mobile compatibility)
-document.getElementById('btnUp').addEventListener('touchstart', (e) => { handleDirectionInput('UP'); e.preventDefault(); });
-document.getElementById('btnDown').addEventListener('touchstart', (e) => { handleDirectionInput('DOWN'); e.preventDefault(); });
-document.getElementById('btnLeft').addEventListener('touchstart', (e) => { handleDirectionInput('LEFT'); e.preventDefault(); });
-document.getElementById('btnRight').addEventListener('touchstart', (e) => { handleDirectionInput('RIGHT'); e.preventDefault(); });
+document.getElementById('btnUp').addEventListener('touchstart', (e) => { handleDirectionInput('UP', 1); e.preventDefault(); });
+document.getElementById('btnDown').addEventListener('touchstart', (e) => { handleDirectionInput('DOWN', 1); e.preventDefault(); });
+document.getElementById('btnLeft').addEventListener('touchstart', (e) => { handleDirectionInput('LEFT', 1); e.preventDefault(); });
+document.getElementById('btnRight').addEventListener('touchstart', (e) => { handleDirectionInput('RIGHT', 1); e.preventDefault(); });
 
 document.getElementById('btnUp').addEventListener('mousedown', () => handleDirectionInput('UP'));
 document.getElementById('btnDown').addEventListener('mousedown', () => handleDirectionInput('DOWN'));
@@ -1162,6 +1210,26 @@ document.getElementById('btnLeft').addEventListener('mousedown', () => handleDir
 document.getElementById('btnRight').addEventListener('mousedown', () => handleDirectionInput('RIGHT'));
 
 // Overlay start buttons
+document.getElementById('btn1P').addEventListener('click', () => {
+    numPlayers = 1;
+    document.getElementById('btn1P').style.border = '2px solid #32ff32';
+    document.getElementById('btn1P').style.background = 'rgba(50,255,50,0.2)';
+    document.getElementById('btn1P').style.opacity = '1';
+    document.getElementById('btn2P').style.border = '2px solid transparent';
+    document.getElementById('btn2P').style.background = 'transparent';
+    document.getElementById('btn2P').style.opacity = '0.7';
+});
+
+document.getElementById('btn2P').addEventListener('click', () => {
+    numPlayers = 2;
+    document.getElementById('btn2P').style.border = '2px solid #32ff32';
+    document.getElementById('btn2P').style.background = 'rgba(50,255,50,0.2)';
+    document.getElementById('btn2P').style.opacity = '1';
+    document.getElementById('btn1P').style.border = '2px solid transparent';
+    document.getElementById('btn1P').style.background = 'transparent';
+    document.getElementById('btn1P').style.opacity = '0.7';
+});
+
 document.getElementById('startBtn').addEventListener('click', () => {
     const nameInputGroup = document.getElementById('usernameInputContainer');
     

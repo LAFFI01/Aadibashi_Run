@@ -1,26 +1,32 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2 -std=c99 -Iinclude
+# ══════════════════════════════════════════════════════
+# Caveman Escape — Makefile
+# ══════════════════════════════════════════════════════
+
+CC      = gcc
+CFLAGS  = -Wall -Wextra -Wpedantic -std=c11 \
+          -O2 -Iinclude
 LDFLAGS = -lm
+TARGET  = bin/caveman_escape
+SRCDIR  = src
+SRCS    = $(SRCDIR)/main.c \
+          $(SRCDIR)/physics.c \
+          $(SRCDIR)/display.c \
+          $(SRCDIR)/enemy_ai.c \
+          $(SRCDIR)/records.c
+OBJS    = $(SRCS:.c=.o)
 
-SRC_DIR = src
-BUILD_DIR = build
-BIN_DIR = bin
-
-SOURCES = $(wildcard $(SRC_DIR)/*.c)
-OBJECTS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES))
-TARGET = $(BIN_DIR)/caveman_escape
+.PHONY: all clean run
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	@mkdir -p $(BIN_DIR)
-	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(SRCDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR)
+	rm -f $(SRCDIR)/*.o $(TARGET)
 
-.PHONY: all clean
+run: all
+	./$(TARGET)
